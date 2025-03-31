@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Enroll</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="exam-container">
+    <h2>Enroll in Course</h2>
+    <input type="text" id="section-input" placeholder="Enter Course Section">
+    <div style="height: 10px;"></div>
+    <button onclick="enrollNow()">Submit</button>
+    <p id="enroll-message" style="margin-top: 10px;"></p>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script>
+    function enrollNow() {
+      let input = document.getElementById("section-input").value.trim();
+      let message = document.getElementById("enroll-message");
+
+      if (input === "") {
+        message.textContent = "Please type a section.";
+        message.style.color = "red";
+        return;
+      }
+
+      let user = localStorage.getItem("userId");
+      let all = getCourses(user);
+      let found = all.find(c => c.startsWith(input + " -"));
+
+      if (found) {
+        enrollStudent(user, found);
+        message.textContent = "Enrolled in " + found;
+        message.style.color = "green";
+        setTimeout(() => window.location.href = "student.html", 1000);
+      } else {
+        message.textContent = "Course not found.";
+        message.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>

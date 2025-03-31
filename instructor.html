@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Instructor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="exam-container">
+    <h2>Instructor Dashboard</h2>
+
+    <select id="course-select">
+      <option value="">Select Course</option>
+    </select>
+    <div style="height: 20px;"></div>
+
+    <button id="create-course-btn" onclick="location.href='course.html'">Create Course</button>
+
+    <div id="exam-btn-container" class="hidden">
+      <button onclick="goToExam()">Create Exam</button>
+      <div style="height: 10px;"></div>
+      <button id="view-exams-btn" class="hidden" onclick="goToView()">View Exams</button>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script>
+    function fillCourses() {
+      let select = document.getElementById("course-select");
+      select.innerHTML = "<option value=''>Select Course</option>";
+      let userId = localStorage.getItem("userId");
+      let list = getCourses(userId);
+
+      for (let i = 0; i < list.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = list[i];
+        opt.textContent = list[i];
+        select.appendChild(opt);
+      }
+
+      if (list.length > 0) {
+        select.value = list[0];
+        document.getElementById("exam-btn-container").classList.remove("hidden");
+        document.getElementById("create-course-btn").classList.add("hidden");
+        checkIfExams(list[0]);
+      }
+    }
+
+    function checkIfExams(course) {
+      let userId = localStorage.getItem("userId");
+      let exams = getExams(userId);
+      let filtered = exams.filter(e => e.course === course);
+      if (filtered.length > 0) {
+        document.getElementById("view-exams-btn").classList.remove("hidden");
+      } else {
+        document.getElementById("view-exams-btn").classList.add("hidden");
+      }
+    }
+
+    function goToExam() {
+      let val = document.getElementById("course-select").value;
+      localStorage.setItem("selectedCourse", val);
+      window.location.href = "exam.html";
+    }
+
+    function goToView() {
+      let val = document.getElementById("course-select").value;
+      localStorage.setItem("selectedCourse", val);
+      window.location.href = "view_exams.html";
+    }
+
+    fillCourses();
+
+    document.getElementById("course-select").addEventListener("change", function () {
+      if (this.value !== "") {
+        document.getElementById("exam-btn-container").classList.remove("hidden");
+        document.getElementById("create-course-btn").classList.add("hidden");
+        checkIfExams(this.value);
+      } else {
+        document.getElementById("exam-btn-container").classList.add("hidden");
+        document.getElementById("create-course-btn").classList.remove("hidden");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Exam Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-container">
+    <h2><b>Login Page</b></h2>
+
+    <select id="role">
+      <option value="student">Student</option>
+      <option value="instructor">Instructor</option>
+    </select>
+
+    <input type="text" id="user-id" placeholder="Student ID">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+    <button onclick="resetLogin()">Reset</button>
+
+    <p id="login-error" style="color: red; display: none;">Invalid login credentials.</p>
+  </div>
+
+  <script src="script.js"></script>
+
+  <script>
+    let roleDrop = document.getElementById("role");
+    let idInput = document.getElementById("user-id");
+
+    roleDrop.addEventListener("change", function() {
+      if (roleDrop.value === "instructor") {
+        idInput.placeholder = "Instructor ID";
+      } else {
+        idInput.placeholder = "Student ID";
+      }
+    });
+
+    function resetLogin() {
+      localStorage.clear();
+      location.reload();
+    }
+  </script>
+</body>
+</html>

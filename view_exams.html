@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>View Exams</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="exam-container">
+    <h2>Exams for <span id="course-name"></span></h2>
+    <div id="exam-list"></div>
+    <button onclick="window.location.href='instructor.html'">Back</button>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script>
+    let course = localStorage.getItem("selectedCourse");
+    document.getElementById("course-name").textContent = course || "Unknown";
+
+    let userId = localStorage.getItem("userId");
+    let exams = getExams(userId);
+    let myExams = exams.filter(e => e.course === course);
+
+    let examList = document.getElementById("exam-list");
+
+    if (myExams.length > 0) {
+      let ul = document.createElement("ul");
+      for (let i = 0; i < myExams.length; i++) {
+        let li = document.createElement("li");
+        li.textContent = myExams[i].title;
+        ul.appendChild(li);
+      }
+      examList.appendChild(ul);
+    } else {
+      examList.textContent = "No exams found.";
+    }
+  </script>
+</body>
+</html>
