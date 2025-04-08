@@ -5,34 +5,66 @@
   <title>Create Course</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body onload="findExistingClasses()">
   <div class="exam-container">
-    <h2>Create Course</h2>
-    <input type="text" id="course-code" placeholder="Course Code">
-    <div style="height: 10px;"></div>
-    <input type="text" id="course-name" placeholder="Course Name">
-    <div style="height: 10px;"></div>
-    <button onclick="makeCourse()">Create Course</button>
+    <h2>Create Section</h2>
+    <h3>Courses</h3>
+    <!--<ul style="padding:0" id="class-list">
+    </ul>-->
+    <div style="padding-bottom: 10px;">
+      <select id="course-dropdown">
+      </select> 
+    </div>
+    <div style="padding-bottom: 10px;">
+      <input type="text" id="section-id" placeholder="Section Code">
+    </div>
+
+    <button onclick="createSection()">Create Course</button>
     <p id="course-message" style="color: red; margin-top: 10px;"></p>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
-    function makeCourse() {
-      let code = document.getElementById("course-code").value;
-      let name = document.getElementById("course-name").value;
-      let message = document.getElementById("course-message");
+    async function findExistingClasses(){
+      const courseDropdown = document.getElementById("course-dropdown");
+      courseDropdown.innerHTML = `<option selected disabled>Choose an option</option>`;
+      const classes = await getClasses()
+      classes.forEach(element => {
+        const classOption = document.createElement("option");
+        //classElement.innerHTML=`
+        //  <strong> Class:</strong> ${element.name}<br>
+        //  <strong>ID: </strong> ${element.id} <br>
+        //`;
+        let classInfo = `${element.id} - ${element.name}`
+        classOption.value = element.id;
+        classOption.textContent = classInfo;
+        courseDropdown.appendChild(classOption);
+        });
 
-      if (code === "" || name === "") {
-        message.textContent = "Please fill both fields.";
+      }
+    
+    async function createSection() {
+      //ADD IN CHECK TO MAKE SURE A DUPLICATE SECTION DOESN'T EXIST
+      const classes = await getClasses()
+      let sectionIDElement = document.getElementById("section-id");
+      let messageElement = document.getElementById("course-message");
+
+      let sectionID = sectionIDElement.value;
+
+      let courseDropdown = document.getElementById("course-dropdown");
+      let courseID = courseDropdown.value;
+      
+      id = "" + courseID + sectionID;
+
+      if (sectionID != NaN){
+        message.textContent = "Please fill all fields.";
         return;
       }
 
-      let fullName = code + " - " + name;
-      addCourse(fullName);
+      addCourse(id);
       message.style.color = "green";
-      message.textContent = "Course added.";
+      message.textContent = "Section added.";
       setTimeout(() => window.location.href = "instructor.html", 1000);
     }
   </script>

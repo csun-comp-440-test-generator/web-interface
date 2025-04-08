@@ -49,6 +49,7 @@
     function isFilled(container) {
       var questionText = container.querySelector(".question-text").value;
       var options = container.querySelectorAll(".option");
+      //replace with Checkboxes
       var answer = container.querySelector(".correct-option").value;
       if (questionText === "") return false;
       for (var i = 0; i < options.length; i++) {
@@ -56,6 +57,7 @@
       }
       if (answer === "" || answer < 1 || answer > 4) return false;
       return true;
+      //Create variable number of questions
     }
 
     document.getElementById("add-question-btn").onclick = function () {
