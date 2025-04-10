@@ -9,8 +9,7 @@
   <div class="exam-container">
     <h2>Instructor Dashboard</h2>
 
-    <select id="course-select">
-      <option value="">Select Course</option>
+    <select id="section-dropdown">
     </select>
     <div style="height: 20px;"></div>
 
@@ -26,6 +25,22 @@
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
+      async function findSections(){
+      const sectionDropdown = document.getElementById("section-dropdown");
+      sectionDropdown.innerHTML = `<option selected disabled>Choose a Section</option>`;
+      teacherID = localStorage.getItem("currentUser");
+      const sections = await getSections(parseInt(teacherID));
+
+      sections.forEach(element => {
+        const sectionOption = document.createElement("option");
+        let sectionInfo = `${element.course_id}-${element.section_id}: ${element.course_name}`
+        sectionOption.value = element.section_id;
+        sectionOption.textContent = sectionInfo;
+        sectionDropdown.appendChild(sectionOption);
+        });
+
+      }
+
     function fillCourses() {
       let select = document.getElementById("course-select");
       select.innerHTML = "<option value=''>Select Course</option>";
@@ -47,11 +62,12 @@
       }
     }
 
-    function checkIfExams(course) {
-      let userId = localStorage.getItem("userId");
-      let exams = getExams(userId);
-      let filtered = exams.filter(e => e.course === course);
-      if (filtered.length > 0) {
+    async function checkIfExams(course) {
+      //let userId = localStorage.getItem("userId");
+      let section_id = document.getElementById("section-dropdown").value;
+      let exams = await getExams(section_id);
+      //let filtered = exams.filter(e => e.course === course);
+      if (exams.length > 0) {
         document.getElementById("view-exams-btn").classList.remove("hidden");
       } else {
         document.getElementById("view-exams-btn").classList.add("hidden");
@@ -70,9 +86,9 @@
       window.location.href = "view_exams.html";
     }
 
-    fillCourses();
+    findSections();
 
-    document.getElementById("course-select").addEventListener("change", function () {
+    document.getElementById("section-dropdown").addEventListener("change", function () {
       if (this.value !== "") {
         document.getElementById("exam-btn-container").classList.remove("hidden");
         document.getElementById("create-course-btn").classList.add("hidden");

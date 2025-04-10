@@ -16,10 +16,10 @@
       </select> 
     </div>
     <div style="padding-bottom: 10px;">
-      <input type="text" id="section-id" placeholder="Section Code">
+      <!--<input type="text" id="section-id" placeholder="Section Code">-->
     </div>
 
-    <button onclick="createSection()">Create Course</button>
+    <button onclick="createSection()">Create Section</button>
     <p id="course-message" style="color: red; margin-top: 10px;"></p>
   </div>
 
@@ -46,25 +46,26 @@
     
     async function createSection() {
       //ADD IN CHECK TO MAKE SURE A DUPLICATE SECTION DOESN'T EXIST
-      const classes = await getClasses()
-      let sectionIDElement = document.getElementById("section-id");
+      //const classes = await getClasses()
+      //let sectionIDElement = document.getElementById("section-id");
       let messageElement = document.getElementById("course-message");
 
-      let sectionID = sectionIDElement.value;
+      //let sectionID = sectionIDElement.value;
 
       let courseDropdown = document.getElementById("course-dropdown");
       let courseID = courseDropdown.value;
-      
-      id = "" + courseID + sectionID;
+      teacherID = localStorage.getItem("currentUser");
 
-      if (sectionID != NaN){
-        message.textContent = "Please fill all fields.";
-        return;
-      }
+      // if (sectionID == NaN){
+      //   messageElement.textContent = "Please fill all fields.";
+      //   return;
+      // }
 
-      addCourse(id);
-      message.style.color = "green";
-      message.textContent = "Section added.";
+      //sectionID, courseID, teacherID, assistantID
+      await addCourse(parseInt(courseID), parseInt(teacherID));
+
+      messageElement.style.color = "green";
+      messageElement.textContent = "Section added.";
       setTimeout(() => window.location.href = "instructor.html", 1000);
     }
   </script>

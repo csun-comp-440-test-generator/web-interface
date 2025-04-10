@@ -1,17 +1,17 @@
 function login() {
   let role = document.getElementById("role").value;
   let userId = document.getElementById("user-id").value;
-  let password = document.getElementById("password").value;
+  //let password = document.getElementById("password").value;
   let errorMessage = document.getElementById("login-error");
 
-  if (userId === "" || password === "") {
+  if (userId === "") {
     errorMessage.style.display = "block";
     return;
   }
 
   localStorage.setItem("role", role);
-  localStorage.setItem("userId", userId);
-  localStorage.setItem("password", password);
+  localStorage.setItem("currentUser", userId);
+  //localStorage.setItem("password", password);
 
   if (role === "instructor") {
     window.location.href = "instructor.html";
@@ -32,9 +32,8 @@ function saveCourses(userId, courses) {
 }
 
 //COURSE.HTML
-async function addCourse(sectionID, courseID, teacherID, assistantID) {
+async function addCourse(courseID, teacherID, assistantID) {
   const body = {
-    section_id:sectionID,
     course_id:courseID,
     teacher_id:teacherID,
   };
@@ -43,20 +42,23 @@ async function addCourse(sectionID, courseID, teacherID, assistantID) {
     body.assistant_id = assistantID;
   }
 
-  const url = 'http://127.0.0.1:8000/course/get_courses'
+  console.log(JSON.stringify(body))
+  const url = 'http://127.0.0.1:8000/section/create' 
   try{
     const res = await fetch(url,{
       method:'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({body})
+      body: JSON.stringify(body)
     })
     if (!res.ok){
+      const errorResponse =await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
       throw new Error(`Response status: ${res.status}`);
     }
     const json=await res.json();
-    return json
+    return res
   } catch(error){
     console.log(error.message);
   }
@@ -77,9 +79,25 @@ function enrollStudent(id, course) {
 }
 //INSTRUCTOR.HTML
 //STUDENT.HTML
-function getExams(userId) {
-  //Replace with FETCH request
-  return JSON.parse(localStorage.getItem("exams_" + userId) || "[]");
+async function getExams(section_id) {
+  let url = `http://127.0.0.1:8000/test/retrieve_by_section_id?section_id=${section_id}` 
+  try{
+    const res = await fetch(url,{
+      method:'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok){
+      const errorResponse =await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json=await res.json();
+    return json
+  } catch(error){
+    console.log(error.message);
+  }
 }
 
 function saveExams(userId, exams) {
@@ -104,6 +122,27 @@ async function getClasses(){
       },
     })
     if (!res.ok){
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json=await res.json();
+    return json
+  } catch(error){
+    console.log(error.message);
+  }
+}
+
+async function getSections(teacher_id){
+  let url = `http://127.0.0.1:8000/teacher/get_teacher_sections?section_id=${teacher_id}` 
+  try{
+    const res = await fetch(url,{
+      method:'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok){
+      const errorResponse =await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
       throw new Error(`Response status: ${res.status}`);
     }
     const json=await res.json();
