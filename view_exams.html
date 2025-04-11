@@ -5,36 +5,66 @@
   <title>View Exams</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body onload="fillExams()">
   <div class="exam-container">
-    <h2>Exams for <span id="course-name"></span></h2>
+    <div id="section-info">
+    </div>
     <div id="exam-list"></div>
-    <button onclick="window.location.href='instructor.html'">Back</button>
+    <button id="view-button" style="margin: 5px;">View</button>
+    <button style="margin: 5px;" onclick="window.location.href='instructor.html'">Back</button>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
-    let course = localStorage.getItem("selectedCourse");
-    document.getElementById("course-name").textContent = course || "Unknown";
+   
+    async function fillExams() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const section_info = await getSectionInfo(parseInt(section_id));
 
-    let userId = localStorage.getItem("userId");
-    let exams = getExams(userId);
-    let myExams = exams.filter(e => e.course === course);
+      document.getElementById("section-info").innerHTML = `
+      <h2>Section:</h2>
+      <h3>${section_info.course}-${section_info.id}: 
+        ${section_info.course_name}</h3>
+        <p>Exams:</p>`;
 
-    let examList = document.getElementById("exam-list");
+      let exams = await getExams(parseInt(section_id));
+      let examList = document.getElementById("exam-list");
 
-    if (myExams.length > 0) {
-      let ul = document.createElement("ul");
-      for (let i = 0; i < myExams.length; i++) {
-        let li = document.createElement("li");
-        li.textContent = myExams[i].title;
-        ul.appendChild(li);
+      if (exams.length > 0) {
+        let ul = document.createElement("ul");
+        ul.style.listStyle = "none";
+        ul.style.margin = "0";
+        ul.style.padding = "0";
+        
+        for (let i = 0; i < exams.length; i++) {
+          let li = document.createElement("li");
+          li.style.marginBottom = "10px";
+          const isChecked = i === 0 ? 'checked' : '';
+          li.innerHTML = `
+          <div style="display: inline-block; margin-right: 10px;">
+            <input id="radio-${i}" type="radio" name="exam" value="${exams[i].id}" ${isChecked}>
+          </div>
+          <div style="display: inline-block;">
+            <label style="font-size: 1em">${exams[i].name}</label>
+          </div>
+          <div style="margin-bottom: 30px"></div>`;
+          ul.appendChild(li);
+        }
+        examList.appendChild(ul);
+      } else {
+        examList.textContent = "No exams found.";
       }
-      examList.appendChild(ul);
-    } else {
-      examList.textContent = "No exams found.";
     }
+
+    document.getElementById("view-button").addEventListener("click", function() {
+      const selected = document.querySelector('input[name="exam"]:checked');
+      if (selected){
+            window.location.href='edit_exam.html';
+      }
+
+    })
+
   </script>
 </body>
 </html>

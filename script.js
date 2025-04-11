@@ -151,3 +151,45 @@ async function getSections(teacher_id){
     console.log(error.message);
   }
 }
+
+async function getSectionInfo(section_id){
+  let url = `http://127.0.0.1:8000/section/get_section_info?section_id=${section_id}` 
+  try{
+    const res = await fetch(url,{
+      method:'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok){
+      const errorResponse =await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json=await res.json();
+    return json
+  } catch(error){
+    console.log(error.message);
+  }
+}
+
+async function getTeacherInfo(teacher_id){
+  let url = `http://127.0.0.1:8000/teacher/get_teacher_by_id?teacher_id=${teacher_id}` 
+  try{
+    const res = await fetch(url,{
+      method:'POST',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok){
+      const errorResponse =await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json=await res.json();
+    return json
+  } catch(error){
+    console.log(error.message);
+  }
+}

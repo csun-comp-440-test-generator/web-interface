@@ -8,7 +8,9 @@
 <body>
   <div class="exam-container">
     <h2>Instructor Dashboard</h2>
+    <div id="instructor-info">
 
+    </div>
     <select id="section-dropdown">
     </select>
     <div style="height: 20px;"></div>
@@ -25,6 +27,19 @@
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
+      async function fillTeacherInfo(){
+          const teacherID = localStorage.getItem("currentUser");
+          const teacherInfo = await getTeacherInfo(parseInt(teacherID));
+          const teacherElement = document.getElementById("instructor-info")
+          teacherElement.innerHTML = `
+          <div>
+          <p> Instructor: <strong> ${teacherInfo.name} </strong></p>
+          <p> Email: <strong> ${teacherInfo.email} </strong> </p>
+          <p> ID: <strong> ${teacherInfo.id} </strong> <p>
+          </div>
+          `;
+      }
+
       async function findSections(){
       const sectionDropdown = document.getElementById("section-dropdown");
       sectionDropdown.innerHTML = `<option selected disabled>Choose a Section</option>`;
@@ -75,18 +90,19 @@
     }
 
     function goToExam() {
-      let val = document.getElementById("course-select").value;
-      localStorage.setItem("selectedCourse", val);
+      let section_id = document.getElementById("section-dropdown").value;
+      localStorage.setItem("selectedCourse", section_id);
       window.location.href = "exam.html";
     }
 
     function goToView() {
-      let val = document.getElementById("course-select").value;
-      localStorage.setItem("selectedCourse", val);
+      let section_id = document.getElementById("section-dropdown").value;
+      localStorage.setItem("selectedCourse", section_id);
       window.location.href = "view_exams.html";
     }
 
     findSections();
+    fillTeacherInfo();
 
     document.getElementById("section-dropdown").addEventListener("change", function () {
       if (this.value !== "") {
