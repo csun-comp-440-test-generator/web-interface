@@ -17,119 +17,257 @@
     <div style="height: 10px;"></div>
 
     <div id="question-form">
-      <div class="question-block">
-        <h3>Question 1</h3>
-        <input type="text" class="question-text" placeholder="Enter Question">
-        <input type="text" class="option" placeholder="Option 1">
-        <!--<input type="text" class="option" placeholder="Option 2">
-        <input type="text" class="option" placeholder="Option 3">
-        <input type="text" class="option" placeholder="Option 4">-->
-        <input type="number" class="correct-option" placeholder="Correct Option (1-4)" min="1" max="4">
+      <div id="question-block" style="padding:15px">
+
       </div>
     </div>
 
     <div style="height: 10px;"></div>
-    <button id="add-question-btn">Add Another Question</button>
+    <button id="add-question-btn" onclick="createQuestion()">New Question</button>
     <div style="height: 10px;"></div>
-    <button id="submit-exam-btn">Publish Exam</button>
+    <button id="submit-exam-btn" onclick="publishExam()">Publish Exam</button>
     <div style="height: 10px;"></div>
-    <button onclick="window.location.href='instructor.html'">Back</button>
+    <button onclick="window.location.href='instructor.html'">Cancel</button>
     <div style="height: 10px;"></div>
 
-    <p id="message" style="color: red;"></p>
+    <p id="error-message" style="color: red;"></p>
+    <p id="ok-message" style="color: green;"></p>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
+    var totalQuestions = 0;
+
       async function fillCourseInfo() {
         const section_id = localStorage.getItem("selectedCourse");
         const section_info = await getSectionInfo(parseInt(section_id));
+
         let courseElement = document.getElementById("course-info");
         let sectionElement = document.getElementById("section-info");
+
         courseElement.textContent=`${section_info.course_name}`;
         sectionElement.textContent=`${section_info.course}-${section_info.id}`;
       }
 
+    function createAnswer(answerBlock, questionCount, answerCount){
+      //answerCount++;
+
+      //const answerBlock = document.getElementById("answer-block");
+
+      const answerText = document.createElement("input");
+      answerText.type = "text";
+      answerText.placeholder = "Type Answer Here";
+      //answerText.id=`question-${totalQuestions}-answer-${totalAnswers}`;
+
+      const correctCheckBox = document.createElement("input");
+      correctCheckBox.type = "checkbox";
+      correctCheckBox.className = "exam-answer-check";
+      //correctCheckBox.id=`answer-checkbox`;
+
+      const newAnswer = document.createElement("div")
+      newAnswer.className = "exam-answer-block";
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "-";
+      deleteButton.className = "exam-answer-delete"
+      deleteButton.addEventListener("click", function(){ 
+        //answerCount--;
+        newAnswer.remove()
+        console.log(answerCount)
+      });
+
+      newAnswer.appendChild(deleteButton)
+      newAnswer.appendChild(answerText)
+      newAnswer.appendChild(correctCheckBox)
+
+      answerBlock.appendChild(newAnswer)
+
+      //console.log(answerCount)
+    }
+
     function createQuestion(){
-      let question = document.createElement("input");
-      let answers = []
+      totalQuestions++;
+      let totalAnswers = 0;
+
+      const container = document.getElementById("question-block");
+
+      const wrapper = document.createElement("div");
+      wrapper.className="question-wrapper";
+
+      const newTitle = document.createElement("h3");
+      newTitle.textContent = `Question ${totalQuestions}`;
+
+
+      const newInput = document.createElement("input");
+      newInput.type = "text";
+      newInput.placeholder = "Enter Question";
+      newInput.className="question-text";
+
+      const answerBlock = document.createElement("div");
+      
+      const answerButton = document.createElement("button");
+      answerButton.textContent = "+";
+      answerButton.addEventListener("click", function(){
+        createAnswer(answerBlock, totalQuestions, totalAnswers);
+      });
+
+      wrapper.appendChild(newTitle);
+      wrapper.appendChild(newInput);
+      wrapper.appendChild(answerBlock);
+      wrapper.appendChild(answerButton);
+
+      container.appendChild(wrapper);
+
+      createAnswer(answerBlock, totalQuestions, totalAnswers);
 
     }
 
-    var questionCount = 1;
+    createQuestion();
 
-    function isFilled(container) {
-      var questionText = container.querySelector(".question-text").value;
-      var options = container.querySelectorAll(".option");
-      //replace with Checkboxes
-      var answer = container.querySelector(".correct-option").value;
-      if (questionText === "") return false;
-      for (var i = 0; i < options.length; i++) {
-        if (options[i].value === "") return false;
-      }
-      if (answer === "" || answer < 1 || answer > 4) return false;
-      return true;
-      //Create variable number of questions
-    }
+    async function publishExam(){
+      let isValid = true;
+      const sectionID = localStorage.getItem("selectedCourse");
+      const examTitle = document.getElementById("exam-title").value;
 
-    document.getElementById("add-question-btn").onclick = function () {
-      var blocks = document.getElementsByClassName("question-block");
-      var lastBlock = blocks[blocks.length - 1];
-      if (!isFilled(lastBlock)) {
-        document.getElementById("message").textContent = "Please fill out all fields.";
-        return;
-      }
+      const exam = {section_id:sectionID, exam_name:examTitle, questions: [] }
 
-      questionCount++;
-      var div = document.createElement("div");
-      div.className = "question-block";
-      div.innerHTML =
-        "<h3>Question " + questionCount + "</h3>" +
-        "<input type='text' class='question-text' placeholder='Enter Question'>" +
-        "<input type='text' class='option' placeholder='Option 1'>" +
-        "<input type='text' class='option' placeholder='Option 2'>" +
-        "<input type='text' class='option' placeholder='Option 3'>" +
-        "<input type='text' class='option' placeholder='Option 4'>" +
-        "<input type='number' class='correct-option' placeholder='Correct Option (1-4)' min='1' max='4'>";
-      document.getElementById("question-form").appendChild(div);
-      document.getElementById("message").textContent = "";
-    }
+      const questionWrappers = document.querySelectorAll('.question-wrapper');
 
-    document.getElementById("submit-exam-btn").onclick = function () {
-      var title = document.getElementById("exam-title").value;
-      var time = document.getElementById("time-limit").value;
-      if (title === "") {
-        document.getElementById("message").textContent = "Exam title is required.";
-        return;
-      }
-      if (time === "" || time <= 0) {
-        document.getElementById("message").textContent = "Enter a valid time.";
-        return;
-      }
+      questionWrappers.forEach(wrapper => {
+        const questionText = wrapper.querySelector('.question-text').value;
 
-      var blocks = document.getElementsByClassName("question-block");
-      var questions = [];
-      for (var i = 0; i < blocks.length; i++) {
-        var box = blocks[i];
-        if (!isFilled(box)) {
-          document.getElementById("message").textContent = "All questions must be filled.";
+        if (!questionText){
+          isValid = false;
+          document.getElementById("error-message").textContent = "Please fill out all fields.";
           return;
         }
-        var q = box.querySelector(".question-text").value;
-        var opts = [];
-        var optInputs = box.querySelectorAll(".option");
-        for (var j = 0; j < optInputs.length; j++) {
-          opts.push(optInputs[j].value);
-        }
-        var ans = parseInt(box.querySelector(".correct-option").value) - 1;
-        questions.push({ question: q, options: opts, answer: ans });
-      }
 
-      addExam(title, questions, course, parseInt(time));
-      localStorage.removeItem("selectedCourse");
-      window.location.href = "instructor.html";
+        const answerBlocks = wrapper.querySelectorAll('.exam-answer-block');
+
+        const answers = []
+        let correctCount = 0;
+
+        answerBlocks.forEach(answerBlock =>{
+          const answerText = answerBlock.querySelector('input[type="text"]').value;
+          const isCorrect = answerBlock.querySelector('.exam-answer-check').checked;
+
+          if (!answerText){
+            isValid = false;
+            document.getElementById("error-message").textContent = "Please fill out all fields.";
+            return;
+          }
+
+          //Validates there is at least one correct answer
+          if(isCorrect)
+            correctCount++;
+
+          answers.push({
+            answer_text:answerText,
+            is_correct:isCorrect
+          });
+        });
+
+        if (correctCount == 0){
+            document.getElementById("error-message").textContent = "There needs to be at least one correct answer per question";
+            isValid=false;
+            return;
+          }
+
+        exam.questions.push({
+          question_text:questionText,
+          answers:answers
+        });
+      });
+
+      if (isValid){
+        console.log(JSON.stringify(exam,null,2));
+        res = await createExam(exam);
+
+        if (res.ok){
+          document.getElementById("error-message").textContent = "";
+          document.getElementById("ok-message").textContent = "Test Published Succesfully";
+          await new Promise( resolve => setTimeout(resolve,3000));
+          window.location.href='view_exams.html'
+        }
+      }
+      
     }
+    
+
+    //var questionCount = 1;
+
+    // function isFilled(container) {
+    //   var questionText = container.querySelector(".question-text").value;
+    //   var options = container.querySelectorAll(".option");
+    //   //replace with Checkboxes
+    //   var answer = container.querySelector(".correct-option").value;
+    //   if (questionText === "") return false;
+    //   for (var i = 0; i < options.length; i++) {
+    //     if (options[i].value === "") return false;
+    //   }
+    //   if (answer === "" || answer < 1 || answer > 4) return false;
+    //   return true;
+    //   //Create variable number of questions
+    // }
+
+    // document.getElementById("add-question-btn").onclick = function () {
+    //   var blocks = document.getElementsByClassName("question-block");
+    //   var lastBlock = blocks[blocks.length - 1];
+    //   if (!isFilled(lastBlock)) {
+    //     document.getElementById("message").textContent = "Please fill out all fields.";
+    //     return;
+    //   }
+
+    //   questionCount++;
+    //   var div = document.createElement("div");
+    //   div.className = "question-block";
+    //   div.innerHTML =
+    //     "<h3>Question " + questionCount + "</h3>" +
+    //     "<input type='text' class='question-text' placeholder='Enter Question'>" +
+    //     "<input type='text' class='option' placeholder='Option 1'>" +
+    //     "<input type='text' class='option' placeholder='Option 2'>" +
+    //     "<input type='text' class='option' placeholder='Option 3'>" +
+    //     "<input type='text' class='option' placeholder='Option 4'>" +
+    //     "<input type='number' class='correct-option' placeholder='Correct Option (1-4)' min='1' max='4'>";
+    //   document.getElementById("question-form").appendChild(div);
+    //   document.getElementById("message").textContent = "";
+    // }
+
+    // document.getElementById("submit-exam-btn").onclick = function () {
+    //   var title = document.getElementById("exam-title").value;
+    //   var time = document.getElementById("time-limit").value;
+    //   if (title === "") {
+    //     document.getElementById("message").textContent = "Exam title is required.";
+    //     return;
+    //   }
+    //   if (time === "" || time <= 0) {
+    //     document.getElementById("message").textContent = "Enter a valid time.";
+    //     return;
+    //   }
+
+    //   var blocks = document.getElementsByClassName("question-block");
+    //   var questions = [];
+    //   for (var i = 0; i < blocks.length; i++) {
+    //     var box = blocks[i];
+    //     if (!isFilled(box)) {
+    //       document.getElementById("message").textContent = "All questions must be filled.";
+    //       return;
+    //     }
+    //     var q = box.querySelector(".question-text").value;
+    //     var opts = [];
+    //     var optInputs = box.querySelectorAll(".option");
+    //     for (var j = 0; j < optInputs.length; j++) {
+    //       opts.push(optInputs[j].value);
+    //     }
+    //     var ans = parseInt(box.querySelector(".correct-option").value) - 1;
+    //     questions.push({ question: q, options: opts, answer: ans });
+    //   }
+
+    //   addExam(title, questions, course, parseInt(time));
+    //   localStorage.removeItem("selectedCourse");
+    //   window.location.href = "instructor.html";
+    // }
   </script>
 </body>
 </html>

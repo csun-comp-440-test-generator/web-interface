@@ -84,3 +84,29 @@ input[type="radio"] {
   color: #2ecc71;
   margin: 10px 0;
 }
+
+.exam-answer-block{
+  display: flex; 
+  flex-direction: row; 
+  padding-top:8px; 
+  padding-bottom:8px; 
+  align-items: center;
+}
+
+.exam-answer-check{
+  width: 20px; 
+  height: 20px; 
+  margin: 8px;
+}
+
+.exam-answer-delete{
+  vertical-align: middle;
+  width: 30px; 
+  height: 30px; 
+  margin-right: 8px;
+  padding: 4px;
+}
+
+.question-text{
+  margin-bottom: 4px;
+}

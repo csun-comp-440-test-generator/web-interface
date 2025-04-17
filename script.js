@@ -193,3 +193,26 @@ async function getTeacherInfo(teacher_id){
     console.log(error.message);
   }
 }
+
+async function createExam(exam){
+  console.log(JSON.stringify(exam))
+  const url = 'http://127.0.0.1:8000/test/create_test' 
+  try{
+    const res = await fetch(url,{
+      method:'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(exam)
+    })
+    if (!res.ok){
+      const errorResponse =await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    //const json=await res.json();
+    return res
+  } catch(error){
+    console.log(error.message);
+  }
+}
