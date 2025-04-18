@@ -110,3 +110,18 @@ input[type="radio"] {
 .question-text{
   margin-bottom: 4px;
 }
+
+.exam-answer{
+  display: flex; 
+  flex-direction: row; 
+  padding-top:5px; 
+  padding-bottom:5px; 
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exam-answer-input{
+  width: 18px; 
+  height: 18px; 
+  margin: 8px;
+}

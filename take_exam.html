@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Take Exam</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .question {
+      margin-bottom: 30px;
+    }
+    .option-row {
+      margin: 10px 0;
+    }
+    .option-row label {
+      font-size: 16px;
+    }
+    #timer {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="exam-container">
+    <div id="header-wrapper">
+            <div style="margin-bottom: 20px;" id="card">
+                <div id="content">
+                    <div id="section-info"></div>
+                    <div id="exam-info"></div>
+                    <button onclick="startExam()" id="start-button">Start Exam</button>
+                </div>
+            </div> 
+    </div>
+
+    <div id="exam-section" class="hidden">
+      <h3 id="timer">Timer</h3>
+      <div id="exam-questions"></div>
+      <button id="submit-exam-button">Submit</button>
+    </div>
+
+    <div id="result-view" class="hidden">
+      <h3>Result</h3>
+      <p id="score-percent">0%</p>
+      <p id="score-details">0/0 Points</p>
+    </div>
+  </div>
+
+  <p id="no-exam-message" style="color:red; display:none;">No exams for this course.</p>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    var exam;
+    async function getCourseInfo(){
+        const section_id = localStorage.getItem("selectedCourse");
+        const section_info = await getSectionInfo(parseInt(section_id));
+
+        document.getElementById("section-info").innerHTML = `
+        <h3>${section_info.course}-${section_info.id}: 
+        ${section_info.course_name}</h3>`;
+
+    }
+    async function getCurrentExam(){
+        const section_id = localStorage.getItem("selectedCourse");
+        const exam_id = localStorage.getItem("selectedExam");
+        
+        exam = await getExam(exam_id,section_id);
+        const question_count = await getExamQuestionCount(exam_id);
+
+        document.getElementById("exam-info").innerHTML = `
+        <h3>${exam.name}</h3>
+        <p>Questions: ${question_count}</p>`;
+        //Need to add duration
+    }
+
+    function startExam() {
+        var container = document.getElementById("exam-questions");
+        var startButton = document.getElementById("start-button");
+        startButton.classList.add("hidden");
+        container.innerHTML = "";
+        let q = 0;
+
+        const exam_data = exam;
+
+        exam_data.questions.forEach(question => {
+            var questionDiv = document.createElement("div");
+            questionDiv.className = "question";
+            q++;
+
+            var questionTitle = document.createElement("h4");
+            questionTitle.textContent = (q) + ") " + question.question_text;
+            questionDiv.appendChild(questionTitle);
+
+            var answersWrapper = document.createElement("div");
+            answersWrapper.className = "answers";
+
+            let num_correct = 0;
+
+            question.answers.forEach(answer => {
+                if(answer.is_correct)
+                    num_correct++;
+            })
+
+            question.answers.forEach(answer => {
+                var answerWrapper = document.createElement("div");
+                answerWrapper.className = "exam-answer";
+                var label = document.createElement("label");
+
+                if(num_correct > 1){
+
+                    var opt = document.createElement("input");
+                    opt.type = "check";
+                    opt.name = "question-" + question.id;
+                    opt.value = answer.id;
+                    opt.className = "exam-answer-check";
+                }else{
+
+                    var opt = document.createElement("input");
+                    opt.type = "radio";
+                    opt.name = "question-" + question.id;
+                    opt.value = answer.id;
+                    opt.className = "exam-answer-check";
+
+                }
+
+                label.appendChild(document.createTextNode(answer.answer_text));
+                answerWrapper.appendChild(label);
+                answerWrapper.appendChild(opt);
+
+                answersWrapper.appendChild(answerWrapper);
+                
+            });
+
+        questionDiv.appendChild(answersWrapper);
+        container.appendChild(questionDiv);
+      });
+
+      document.getElementById("exam-section").classList.remove("hidden");
+
+      document.querySelector('#submit-exam-button').addEventListener('click', function (e) {
+        const confirmed = confirm('All submissions are final, are you sure you want to submit the exam?');
+        if (confirmed) {
+            gradeExam();
+        }
+        });
+
+    //   var totalTime = exam.timeLimit * 60;
+    //   var timer = document.getElementById("timer");
+
+    //   function updateCountdown() {
+    //     var mins = Math.floor(totalTime / 60);
+    //     var secs = totalTime % 60;
+    //     timer.textContent = "Time Left: " + mins + ":" + (secs < 10 ? "0" + secs : secs);
+    //     if (totalTime <= 0) {
+    //       clearInterval(examTimer);
+    //       document.getElementById("submit-exam-button").click();
+    //     }
+    //     totalTime--;
+    //   }
+
+    //   updateCountdown();
+    //   var examTimer = setInterval(updateCountdown, 1000);
+
+    //   document.getElementById("submit-exam-button").onclick = function () {
+    //     clearInterval(examTimer);
+    }
+
+    async function gradeExam(){ 
+
+        let score = 0;
+        let q=0;
+        
+        exam.questions.forEach(question => {
+            q++;
+            const selection = document.querySelector(`input[name="question-${q}"]:checked`);
+
+            if (selection != null){
+                const selectedAnswer = selection.value;                
+                question.answers.forEach(answer => {
+                    if (selectedAnswer == answer.id && answer.is_correct)
+                        score++;
+                })          
+            }
+        
+        });
+
+        const percent = Math.round((score / exam.questions.length) * 100);
+
+        document.getElementById("exam-section").classList.add("hidden");
+        document.getElementById("result-view").classList.remove("hidden");
+
+        document.getElementById("score-percent").textContent = percent + "%";
+        document.getElementById("score-details").textContent = score + "/" + exam.questions.length + " Points";
+
+        const student_id = localStorage.getItem("currentUser");
+        const test_id = exam.id;
+
+        let attempt = await getExamAttempts(student_id,test_id);
+
+        const submission={
+            student_id:student_id,
+            test_id:test_id,
+            attempt:attempt,
+            score:score,
+        }
+
+        await submitExam(submission);
+
+      }
+    
+
+
+    // document.getElementById("section-dropdown").addEventListener("change", function () {
+    //   if (this.value !== "") {
+    //     document.getElementById("section-button").classList.remove("hidden");
+    //   };
+    // });
+
+    getCourseInfo();
+    getCurrentExam();
+
+  </script>
+</body>
+</html>

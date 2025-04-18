@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>View Exams</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body onload="fillExams()">
+  <div class="exam-container">
+    <div id="section-info">
+    </div>
+    <div id="exam-list"></div>
+    <button id="take-button" style="margin: 5px;">View</button>
+    <button style="margin: 5px;" onclick="window.location.href='student.html'">Back</button>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script>
+   
+    async function fillExams() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const section_info = await getSectionInfo(parseInt(section_id));
+
+      const student_id =  localStorage.getItem("currentUser");
+
+      document.getElementById("section-info").innerHTML = `
+      <h2>Section:</h2>
+      <h3>${section_info.course}-${section_info.id}: 
+        ${section_info.course_name}</h3>
+        <p>Exams:</p>`;
+
+      let exams = await getRegisteredExams(parseInt(student_id));
+      let examList = document.getElementById("exam-list");
+
+      if (exams.length > 0) {
+        let ul = document.createElement("ul");
+        ul.style.listStyle = "none";
+        ul.style.margin = "0";
+        ul.style.padding = "0";
+        
+        for (let i = 0; i < exams.length; i++) {                                                                                                                                                                                                                                                         
+          let li = document.createElement("li");
+          li.style.marginBottom = "10px";
+          const isChecked = i === 0 ? 'checked' : '';
+          li.innerHTML = `
+          <div style="display: inline-block; margin-right: 10px;">
+            <input id="radio-${i}" type="radio" name="exam" value="${exams[i].test_id}" ${isChecked}>
+          </div>
+          <div style="display: inline-block;">
+            <label style="font-size: 1em">${exams[i].test_name}</label>
+          </div>
+          <div style="margin-bottom: 30px"></div>`;
+          ul.appendChild(li);
+        }
+        examList.appendChild(ul);
+      } else {
+        examList.textContent = "No exams found.";
+      }
+
+      //ADD LOGIC FOR START AND END TIMES
+    }
+
+    document.getElementById("take-button").addEventListener("click", function() {
+      const selected = document.querySelector('input[name="exam"]:checked');
+      const exam_id = selected.value;
+      localStorage.setItem("selectedExam", exam_id);
+      if (selected){
+            window.location.href='take_exam.html';
+      }
+
+    })
+
+  </script>
+</body>
+</html>
