@@ -11,17 +11,16 @@
     <div id="instructor-info">
 
     </div>
-    <select id="section-dropdown">
+    <select id="section-dropdown" style="margin-bottom: 10px;">
     </select>
-    <div style="height: 20px;"></div>
 
-    <button id="create-course-btn" onclick="location.href='course.html'">New Section</button>
-
+    <button id="create-course-btn" onclick="location.href='course.html'" style="margin-bottom: 10px;">New Section</button>
+  
     <div id="exam-btn-container" class="hidden">
-      <button onclick="goToExam()">Create Exam</button>
-      <div style="height: 10px;"></div>
-      <button id="view-exams-btn" class="hidden" onclick="goToView()">View Exams</button>
+      <button onclick="goToExam()" style="margin-bottom: 10px;" >Create Exam</button>
+      <button id="view-exams-btn" style="margin-bottom: 10px;" class="hidden" onclick="goToView()">View Exams</button>
     </div>
+    <button id="create-course-btn" onclick="location.href='index.html'">Logout</button>
   </div>
 
   <script src="data.js"></script>
@@ -54,27 +53,6 @@
           sectionDropdown.appendChild(sectionOption);
           });
       }
-
-    // function fillCourses() {
-    //   let select = document.getElementById("course-select");
-    //   select.innerHTML = "<option value=''>Select Course</option>";
-    //   let userId = localStorage.getItem("userId");
-    //   let list = getCourses(userId);
-
-    //   for (let i = 0; i < list.length; i++) {
-    //     let opt = document.createElement("option");
-    //     opt.value = list[i];
-    //     opt.textContent = list[i];
-    //     select.appendChild(opt);
-    //   }
-
-    //   if (list.length > 0) {
-    //     select.value = list[0];
-    //     document.getElementById("exam-btn-container").classList.remove("hidden");
-    //     document.getElementById("create-course-btn").classList.add("hidden");
-    //     checkIfExams(list[0]);
-    //   }
-    // }
 
     async function checkIfExams(course) {
       //let userId = localStorage.getItem("userId");
