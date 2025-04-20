@@ -1,47 +1,57 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Enroll</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div class="exam-container">
     <h2>Enroll in Course</h2>
-    <input type="text" id="section-input" placeholder="Enter Course Section">
-    <div style="height: 10px;"></div>
-    <button onclick="enrollNow()">Submit</button>
+    <select id="section-dropdown" style="margin-bottom: 10px;"></select>
+    <button onclick="enrollSection()" style="margin-bottom: 10px;">Submit</button>
+    <button onclick="window.location.href = 'student.html'" >Cancel</button>
     <p id="enroll-message" style="margin-top: 10px;"></p>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
-    //Should be drop down menu  to choose
-    function enrollNow() {
-      let input = document.getElementById("section-input").value.trim();
-      let message = document.getElementById("enroll-message");
+    async function findSections() {
+      const sectionDropdown = 
+      document.getElementById("section-dropdown");
+      sectionDropdown.innerHTML = `<option selected disabled>Select Section</option>`;
+      studentID = localStorage.getItem("currentUser");
+      const sections = await getUnregisteredSections(parseInt(studentID));
 
-      if (input === "") {
-        message.textContent = "Please type a section.";
-        message.style.color = "red";
-        return;
-      }
-
-      let user = localStorage.getItem("userId");
-      let all = getCourses(user);
-      let found = all.find(c => c.startsWith(input + " -"));
-
-      if (found) {
-        enrollStudent(user, found);
-        message.textContent = "Enrolled in " + found;
-        message.style.color = "green";
-        setTimeout(() => window.location.href = "student.html", 1000);
-      } else {
-        message.textContent = "Course not found.";
-        message.style.color = "red";
-      }
+      sections.forEach(element => {
+        const sectionOption = document.createElement("option");
+        let sectionInfo = `${element.course}-${element.id} ${element.course_name}: ${element.teacher_name}`
+        sectionOption.value = element.id;
+        sectionOption.textContent = sectionInfo;
+        sectionDropdown.appendChild(sectionOption);
+      });
     }
+
+    async function enrollSection(){
+      studentID = localStorage.getItem("currentUser");
+      sectionID =   document.getElementById("section-dropdown").value;
+      res = await enrollStudent(parseInt(studentID),parseInt(sectionID));
+      if (res.ok){
+        section = await getSectionInfo(parseInt(sectionID));
+        let message = document.getElementById("enroll-message");
+        message.style.color = "green";
+        message.textContent = `Enrolled in ${section.course}-${section.id}: ${section.course_name}`;
+        setTimeout(() => window.location.href = "student.html", 1000);
+      }
+
+    }
+
+    findSections();
+
   </script>
 </body>
+
 </html>
