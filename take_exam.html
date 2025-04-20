@@ -29,7 +29,8 @@
                 <div id="content">
                     <div id="section-info"></div>
                     <div id="exam-info"></div>
-                    <button onclick="startExam()" id="start-button">Start Exam</button>
+                    <button onclick="startExam()" id="start-button" style="margin-bottom: 10px;">Start Exam</button>
+                    <button onclick="window.location.href ='student_course.html';" id="back-button">Back</button>
                 </div>
             </div> 
     </div>
@@ -79,7 +80,9 @@
     function startExam() {
         var container = document.getElementById("exam-questions");
         var startButton = document.getElementById("start-button");
+        var backButton = document.getElementById("back-button");
         startButton.classList.add("hidden");
+        backButton.classList.add("hidden");
         container.innerHTML = "";
         let q = 0;
 
@@ -204,10 +207,16 @@
             student_id:student_id,
             test_id:test_id,
             attempt:attempt,
-            score:score,
+            score:score / exam.questions.length,
         }
 
         await submitExam(submission);
+
+        const section_id = localStorage.getItem("selectedCourse");
+        await updateGrade(parseInt(student_id), parseInt(section_id))
+
+        var backButton = document.getElementById("back-button");
+        backButton.classList.remove("hidden");
 
       }
     

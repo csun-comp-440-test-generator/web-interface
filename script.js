@@ -416,8 +416,50 @@ async function submitExam(submission) {
   }
 }
 
+async function updateGrade(student_id, section_id) {
+  let url = `http://127.0.0.1:8000/section/update_grade?student_id=${student_id}&section_id=${section_id}`
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
 async function getExamAttempts(student_id, exam_id) {
   let url = `http://127.0.0.1:8000/test/retrieve_attempts?student_id=${student_id}&test_id=${exam_id}`
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+async function getCurrentGrade(student_id,section_id) {
+  let url = `http://127.0.0.1:8000/student/get_current_grade?student_id=${student_id}&section_id=${section_id}`
   try {
     const res = await fetch(url, {
       method: 'GET',

@@ -20,14 +20,16 @@
    
     async function fillExams() {
       const section_id =  localStorage.getItem("selectedCourse");
-      const section_info = await getSectionInfo(parseInt(section_id));
-
       const student_id =  localStorage.getItem("currentUser");
+
+      const section_info = await getSectionInfo(parseInt(section_id));
+      const current_grade = await getCurrentGrade(parseInt(student_id), parseInt(section_id))
 
       document.getElementById("section-info").innerHTML = `
       <h2>Section:</h2>
       <h3>${section_info.course}-${section_info.id}: 
         ${section_info.course_name}</h3>
+      <h3>Grade: ${current_grade}%</h3>
         <p>Exams:</p>`;
 
       let examList = document.getElementById("exam-list");
