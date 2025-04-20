@@ -9,9 +9,9 @@
   <div class="exam-container">
     <div id="section-info">
     </div>
-    <div id="exam-list"></div>
-    <button id="take-button" style="margin: 5px;">View</button>
-    <button style="margin: 5px;" onclick="window.location.href='student.html'">Back</button>
+    <div id="exam-list" style="margin-bottom: 10px;"></div>
+    <button id="take-button" style="margin-bottom: 10px;">View</button>
+    <button style="margin-bottom: 10px;" onclick="window.location.href='student.html'">Back</button>
   </div>
 
   <script src="data.js"></script>
@@ -19,7 +19,7 @@
   <script>
    
     async function fillExams() {
-      const section_id = localStorage.getItem("selectedCourse");
+      const section_id =  localStorage.getItem("selectedCourse");
       const section_info = await getSectionInfo(parseInt(section_id));
 
       const student_id =  localStorage.getItem("currentUser");
@@ -30,8 +30,9 @@
         ${section_info.course_name}</h3>
         <p>Exams:</p>`;
 
-      let exams = await getRegisteredExams(parseInt(student_id));
       let examList = document.getElementById("exam-list");
+      let exams = await getRegisteredExams(parseInt(student_id),parseInt(section_id));
+
 
       if (exams.length > 0) {
         let ul = document.createElement("ul");
@@ -54,9 +55,14 @@
           ul.appendChild(li);
         }
         examList.appendChild(ul);
-      } else {
-        examList.textContent = "No exams found.";
-      }
+      } 
+    else{
+      let span = document.createElement("span");
+      span.innerHTML= `<strong> No Exams Available </strong`;
+      span.style.marginBottom = "10px";
+      examList.appendChild(span);
+    }
+
 
       //ADD LOGIC FOR START AND END TIMES
     }

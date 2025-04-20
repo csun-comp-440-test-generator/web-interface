@@ -259,8 +259,8 @@ async function getEnrolledSections(student_id){
   }
 }
 
-async function getRegisteredExams(student_id) {
-  let url = `http://127.0.0.1:8000/student/get_registered_exams?student_id=${student_id}` 
+async function getRegisteredExams(student_id, section_id) {
+  let url = `http://127.0.0.1:8000/student/get_registered_exams?student_id=${student_id}&section_id=${section_id}` 
   try{
     const res = await fetch(url,{
       method:'GET',
