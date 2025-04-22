@@ -12,6 +12,7 @@
     <select id="role">
       <option value="student">Student</option>
       <option value="instructor">Instructor</option>
+      <option value="assistant">Assistant</option>
     </select>
 
     <input type="text" id="user-id" placeholder="Student ID">
@@ -34,6 +35,9 @@
     roleDrop.addEventListener("change", function() {
       if (roleDrop.value === "instructor") {
         idInput.placeholder = "Instructor ID";
+      }
+      else if (roleDrop.value === "assistant") {
+          idInput.placeholder = "Assistant ID";
       } else {
         idInput.placeholder = "Student ID";
       }

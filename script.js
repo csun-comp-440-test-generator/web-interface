@@ -13,9 +13,9 @@ function login() {
   localStorage.setItem("currentUser", userId);
   //localStorage.setItem("password", password);
 
-  if (role === "instructor") {
+  if (role === "instructor" || role ==="assistant") {
     window.location.href = "instructor.html";
-  } else {
+  } else if (role === "student") {
     window.location.href = "student.html";
   }
 }
@@ -125,27 +125,6 @@ async function getClasses() {
 
 //SECTIONS
 
-async function getSections(teacher_id) {
-  let url = `http://127.0.0.1:8000/teacher/get_teacher_sections?teacher_id=${teacher_id}`
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
-    })
-    if (!res.ok) {
-      const errorResponse = await res.json();
-      console.error('FASTAPI Error Response:', errorResponse)
-      throw new Error(`Response status: ${res.status}`);
-    }
-    const json = await res.json();
-    return json
-  } catch (error) {
-    console.log(error.message);
-  }
-}
-
 async function getSectionInfo(section_id) {
   let url = `http://127.0.0.1:8000/section/get_section_info?section_id=${section_id}`
   try {
@@ -238,12 +217,32 @@ async function enrollStudent(student_id,section_id) {
 
 
 //TEACHER
-
 async function getTeacherInfo(teacher_id) {
   let url = `http://127.0.0.1:8000/teacher/get_teacher_by_id?teacher_id=${teacher_id}`
   try {
     const res = await fetch(url, {
       method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+async function getTeacherSections(teacher_id) {
+  let url = `http://127.0.0.1:8000/teacher/get_teacher_sections?teacher_id=${teacher_id}`
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
       headers: {
         'Accept': 'application/json'
       },
@@ -278,6 +277,49 @@ async function createExam(exam) {
     }
     //const json=await res.json();
     return res
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+//ASSISTANT
+async function getAssistantInfo(id) {
+  let url = `http://127.0.0.1:8000/assistant/get_by_id?assistant_id=${id}`
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+async function getAssistantSections(id) {
+  let url = `http://127.0.0.1:8000/assistant/get_sections?assistant_id=${id}`
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
   } catch (error) {
     console.log(error.message);
   }

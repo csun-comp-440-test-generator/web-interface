@@ -59,7 +59,10 @@
 
     document.getElementById("view-button").addEventListener("click", function() {
       const selected = document.querySelector('input[name="exam"]:checked');
+      const exam_id = selected.value;
+      localStorage.setItem("selectedExam", exam_id);
       if (selected){
+
             window.location.href='edit_exam.html';
       }
 
