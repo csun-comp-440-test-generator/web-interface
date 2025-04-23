@@ -12,11 +12,25 @@
     <h2><span id="course-info"></span></h2>
     <h2><span id="section-info"></span></h2>
 
-    <input type="text" id="exam-title" placeholder="Exam Title">
-    <div style="height: 10px;"></div>
+    <input type="text" id="exam-title" placeholder="Exam Title" style="margin-bottom: 10px;">
 
-    <input type="number" id="time-limit" placeholder="Time Limit (minutes)" min="1">
-    <div style="height: 10px;"></div>
+    <div style="display: flex; flex-direction: row; max-width: 400px; align-items: center; margin-bottom: 10px; margin-top: 10px;">
+      
+      <div style="display: flex; flex-direction: column; flex: 1; padding-right: 5px;">
+        <h5 style="margin: 0 0 5px 0;">Due Date:</h5>
+        <input type="date" id="due-date-picker" style="height: 50px;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; flex: 1; padding-right: 5px">
+        <h5 style="margin: 0 0 5px 0;">Start Time:</h5>
+        <input type="time" id="start-time-picker" style="height: 50px;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; flex: 1; padding-right: 5px">
+        <h5 style="margin: 0 0 5px 0;">Duration:</h5>
+        <input type="number" id="duration-input" placeholder="Minutes" min="1" style="height: 50px;">
+      </div>
+    </div>
 
     <div id="question-form">
       <div id="question-block" style="padding:15px">
@@ -56,15 +70,22 @@
     async function getCurrentExamInfo() {
       const section_id = localStorage.getItem("selectedCourse");
 
-      exam = await getExam(examID, section_id);
+      exam_info = await getExamInfo(examID, section_id);
+      exam = await getExam(examID);
+
       const question_count = await getExamQuestionCount(examID);
 
-      displayExam(exam);
+      displayExam(exam, exam_info);
     }
 
-    async function displayExam(exam) {
+    async function displayExam(exam, exam_info) {
       const examTitle = document.getElementById("exam-title");
-      examTitle.value = `${exam.name}`;
+      examTitle.value = `${exam_info.name}`;
+
+      // const dueDate = document.getElementById("due-date-picker");
+      // const starTime = document.getElementById("start-time-picker");
+      // const duration = document.getElementById("duration");
+      
 
       exam.questions.forEach(question => {
         createQuestion(question);

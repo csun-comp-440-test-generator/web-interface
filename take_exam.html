@@ -68,11 +68,12 @@
         const section_id = localStorage.getItem("selectedCourse");
         const exam_id = localStorage.getItem("selectedExam");
         
-        exam = await getExam(exam_id,section_id);
+        const exam_info = await getExamInfo(exam_id, section_id);
+        exam = await getExam(exam_id);
         const question_count = await getExamQuestionCount(exam_id);
 
         document.getElementById("exam-info").innerHTML = `
-        <h3>${exam.name}</h3>
+        <h3>${exam_info.name}</h3>
         <p>Questions: ${question_count}</p>`;
         //Need to add duration
     }

@@ -1,20 +1,36 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Create Exam</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body onload="fillCourseInfo()">
   <div class="exam-container">
     <h2><span id="course-info"></span></h2>
     <h2><span id="section-info"></span></h2>
 
-    <input type="text" id="exam-title" placeholder="Exam Title">
-    <div style="height: 10px;"></div>
+    <input type="text" id="exam-title" placeholder="Exam Title" style="margin-bottom: 10px;">
 
-    <input type="number" id="time-limit" placeholder="Time Limit (minutes)" min="1">
-    <div style="height: 10px;"></div>
+    <div style="display: flex; flex-direction: row; max-width: 400px; align-items: center; margin-bottom: 10px; margin-top: 10px;">
+      
+      <div style="display: flex; flex-direction: column; flex: 1; padding-right: 5px;">
+        <h5 style="margin: 0 0 5px 0;">Due Date:</h5>
+        <input type="date" id="due-date-picker" style="height: 50px;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; flex: 1; padding-right: 5px">
+        <h5 style="margin: 0 0 5px 0;">Start Time:</h5>
+        <input type="time" id="start-time-picker" style="height: 50px;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; flex: 1; padding-right: 5px">
+        <h5 style="margin: 0 0 5px 0;">Duration:</h5>
+        <input type="number" id="duration-input" placeholder="Minutes" min="1" style="height: 50px;">
+      </div>
+    </div>
 
     <div id="question-form">
       <div id="question-block" style="padding:15px">
@@ -39,26 +55,31 @@
   <script>
     var totalQuestions = 0;
 
-      async function fillCourseInfo() {
-        const section_id = localStorage.getItem("selectedCourse");
-        const section_info = await getSectionInfo(parseInt(section_id));
+    async function fillCourseInfo() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const section_info = await getSectionInfo(parseInt(section_id));
 
-        let courseElement = document.getElementById("course-info");
-        let sectionElement = document.getElementById("section-info");
+      let courseElement = document.getElementById("course-info");
+      let sectionElement = document.getElementById("section-info");
 
-        courseElement.textContent=`${section_info.course_name}`;
-        sectionElement.textContent=`${section_info.course}-${section_info.id}`;
-      }
+      courseElement.textContent = `${section_info.course_name}`;
+      sectionElement.textContent = `${section_info.course}-${section_info.id}`;
 
-    function renumber_questions(){
+      const dateInput = document.getElementById("due-date-picker");
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+
+    }
+
+    function renumber_questions() {
       const questions = document.querySelectorAll(".question-wrapper");
-      questions.forEach((questionTitle, index) =>{
-          const title = questionTitle.querySelector("h3");
-          title.textContent = `Question ${index +1}`;
+      questions.forEach((questionTitle, index) => {
+        const title = questionTitle.querySelector("h3");
+        title.textContent = `Question ${index + 1}`;
       })
     }
 
-    function createAnswer(answerBlock, questionCount, answerCount){
+    function createAnswer(answerBlock, questionCount, answerCount) {
       //answerCount++;
 
       //const answerBlock = document.getElementById("answer-block");
@@ -79,7 +100,7 @@
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "-";
       deleteButton.className = "exam-answer-delete"
-      deleteButton.addEventListener("click", function(){ 
+      deleteButton.addEventListener("click", function () {
         //answerCount--;
         newAnswer.remove()
         console.log(answerCount)
@@ -94,14 +115,14 @@
       //console.log(answerCount)
     }
 
-    function createQuestion(){
+    function createQuestion() {
       totalQuestions++;
       let totalAnswers = 0;
 
       const container = document.getElementById("question-block");
 
       const wrapper = document.createElement("div");
-      wrapper.className="question-wrapper";
+      wrapper.className = "question-wrapper";
 
       const newTitle = document.createElement("h3");
       newTitle.textContent = `Question ${totalQuestions}`;
@@ -110,23 +131,23 @@
       const newInput = document.createElement("input");
       newInput.type = "text";
       newInput.placeholder = "Enter Question";
-      newInput.className="question-text";
+      newInput.className = "question-text";
 
       const answerBlock = document.createElement("div");
-      
+
       const answerButton = document.createElement("button");
       answerButton.textContent = "+";
-      answerButton.addEventListener("click", function(){
+      answerButton.addEventListener("click", function () {
         createBlankAnswer(answerBlock, totalQuestions, totalAnswers);
       });
       answerButton.style.marginBottom = "10px";
 
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "Delete";
-      deleteButton.addEventListener("click", function(){
-         deleteButton.parentElement.remove()
-         totalQuestions--;
-         renumber_questions();
+      deleteButton.addEventListener("click", function () {
+        deleteButton.parentElement.remove()
+        totalQuestions--;
+        renumber_questions();
       });
       deleteButton.style.marginBottom = "10px";
 
@@ -144,19 +165,45 @@
 
     createQuestion();
 
-    async function publishExam(){
+    function getDueDates(){
+      const dueDate = document.getElementById("due-date-picker").value;
+      const startTime = document.getElementById("start-time-picker").value;
+      const duration = parseInt(document.getElementById("duration-input").value);
+
+      if (dueDate && startTime && !isNaN(duration)) {
+        const startDateTime = new Date(`${dueDate}T${startTime}:00`);
+        const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+        const DueDates = {
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString()
+        };
+
+        return DueDates;
+      }
+    }
+
+    async function publishExam() {
       let isValid = true;
+      
+      const dueDates = getDueDates();
+
       const sectionID = localStorage.getItem("selectedCourse");
       const examTitle = document.getElementById("exam-title").value;
 
-      const exam = {section_id:sectionID, exam_name:examTitle, questions: [] }
+      const exam = { 
+        section_id: sectionID, 
+        exam_name: examTitle, 
+        start_time: dueDates.start_time, 
+        end_time: dueDates.end_time, 
+        questions: [] }
 
       const questionWrappers = document.querySelectorAll('.question-wrapper');
 
       questionWrappers.forEach(wrapper => {
         const questionText = wrapper.querySelector('.question-text').value;
 
-        if (!questionText){
+        if (!questionText) {
           isValid = false;
           document.getElementById("error-message").textContent = "Please fill out all fields.";
           return;
@@ -167,51 +214,52 @@
         const answers = []
         let correctCount = 0;
 
-        answerBlocks.forEach(answerBlock =>{
+        answerBlocks.forEach(answerBlock => {
           const answerText = answerBlock.querySelector('input[type="text"]').value;
           const isCorrect = answerBlock.querySelector('.exam-answer-check').checked;
 
-          if (!answerText){
+          if (!answerText) {
             isValid = false;
             document.getElementById("error-message").textContent = "Please fill out all fields.";
             return;
           }
 
           //Validates there is at least one correct answer
-          if(isCorrect)
+          if (isCorrect)
             correctCount++;
 
           answers.push({
-            answer_text:answerText,
-            is_correct:isCorrect
+            answer_text: answerText,
+            is_correct: isCorrect
           });
         });
 
-        if (correctCount == 0){
-            document.getElementById("error-message").textContent = "There needs to be at least one correct answer per question";
-            isValid=false;
-            return;
-          }
+        if (correctCount == 0) {
+          document.getElementById("error-message").textContent = "There needs to be at least one correct answer per question";
+          isValid = false;
+          return;
+        }
 
         exam.questions.push({
-          question_text:questionText,
-          answers:answers
+          question_text: questionText,
+          answers: answers
         });
       });
 
-      if (isValid){
-        console.log(JSON.stringify(exam,null,2));
+      if (isValid) {
+        console.log(JSON.stringify(exam, null, 2));
         res = await createExam(exam);
 
-        if (res.ok){
+        if (res.ok) {
           document.getElementById("error-message").textContent = "";
           document.getElementById("ok-message").textContent = "Test Published Succesfully";
-          await new Promise( resolve => setTimeout(resolve,3000));
-          window.location.href='view_exams.html'
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          window.location.href = 'view_exams.html'
         }
       }
-      
+
     }
   </script>
 </body>
+
 </html>

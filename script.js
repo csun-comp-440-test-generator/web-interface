@@ -464,10 +464,33 @@ async function getRegisteredExams(student_id, section_id) {
   }
 }
 
-async function getExam(exam_id, section_id) {
+async function getExamInfo(exam_id, section_id) {
   //REVAMP TO PULL RANDOM TEST FROM BANK
   //CURRENTLY PULLS FULL TEST (BETTER FOR EDITING FOR TEACHER AND TA)
-  let url = `http://127.0.0.1:8000/test/retrieve_by_test_id?test_id=${exam_id}&section_id=${section_id}`
+  let url = `http://127.0.0.1:8000/test/retrieve_info?test_id=${exam_id}&section_id=${section_id}`
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+async function getExam(exam_id) {
+  //REVAMP TO PULL RANDOM TEST FROM BANK
+  //CURRENTLY PULLS FULL TEST (BETTER FOR EDITING FOR TEACHER AND TA)
+  let url = `http://127.0.0.1:8000/test/retrieve_by_test_id?test_id=${exam_id}`
   try {
     const res = await fetch(url, {
       method: 'GET',
