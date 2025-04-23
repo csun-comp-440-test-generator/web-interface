@@ -331,6 +331,31 @@ async function createExam(exam) {
   }
 }
 
+async function deleteExam(exam_id,section_id) {
+  const body = {
+    exam_id:exam_id,
+    section_id:section_id
+  }
+  let url = `http://127.0.0.1:8000/test/delete`
+  try {
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    return res
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
 //ASSISTANT
 async function getAssistantInfo(id) {
   let url = `http://127.0.0.1:8000/assistant/get_by_id?assistant_id=${id}`
