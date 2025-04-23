@@ -5,7 +5,7 @@
   <title>Create Exam</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body onload="fillCourseInfo()">
+<body>
   <div class="exam-container">
     <h2><span id="course-info"></span></h2>
     <h2><span id="section-info"></span></h2>
@@ -23,7 +23,7 @@
     </div>
 
     <div style="height: 10px;"></div>
-    <button id="add-question-btn" onclick="createQuestion()">New Question</button>
+    <button id="add-question-btn" onclick="createBlankQuestion()">New Question</button>
     <div style="height: 10px;"></div>
     <button id="submit-exam-btn" onclick="publishExam()">Publish Exam</button>
     <div style="height: 10px;"></div>
@@ -39,7 +39,7 @@
   <script>
     var totalQuestions = 0;
 
-      async function fillCourseInfo() {
+    async function fillCourseInfo() {
         const section_id = localStorage.getItem("selectedCourse");
         const section_info = await getSectionInfo(parseInt(section_id));
 
@@ -50,6 +50,25 @@
         sectionElement.textContent=`${section_info.course}-${section_info.id}`;
       }
 
+    async function getCurrentExamInfo() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const exam_id = localStorage.getItem("selectedExam");
+
+      exam = await getExam(exam_id, section_id);
+      const question_count = await getExamQuestionCount(exam_id);
+
+      displayExam(exam);
+    }
+
+    async function displayExam(exam){
+        const examTitle = document.getElementById("exam-title");
+        examTitle.value = `${exam.name}`;
+
+        exam.questions.forEach(question => {
+            createQuestion(question);
+        });
+    }
+
     function renumber_questions(){
       const questions = document.querySelectorAll(".question-wrapper");
       questions.forEach((questionTitle, index) =>{
@@ -58,20 +77,17 @@
       })
     }
 
-    function createAnswer(answerBlock, questionCount, answerCount){
-      //answerCount++;
-
-      //const answerBlock = document.getElementById("answer-block");
-
-      const answerText = document.createElement("input");
-      answerText.type = "text";
-      answerText.placeholder = "Type Answer Here";
-      //answerText.id=`question-${totalQuestions}-answer-${totalAnswers}`;
+    function createAnswer(answer, answerBlock, questionCount, answerCount){
+      const answerInput = document.createElement("input");
+      answerInput.type = "text";
+      answerInput.placeholder = "Type Answer Here";
+      answerInput.value = answer.answer_text;
 
       const correctCheckBox = document.createElement("input");
       correctCheckBox.type = "checkbox";
       correctCheckBox.className = "exam-answer-check";
-      //correctCheckBox.id=`answer-checkbox`;
+      correctCheckBox.checked = answer.is_correct;
+
 
       const newAnswer = document.createElement("div")
       newAnswer.className = "exam-answer-block";
@@ -86,15 +102,14 @@
       });
 
       newAnswer.appendChild(deleteButton)
-      newAnswer.appendChild(answerText)
+      newAnswer.appendChild(answerInput)
       newAnswer.appendChild(correctCheckBox)
 
       answerBlock.appendChild(newAnswer)
 
-      //console.log(answerCount)
     }
 
-    function createQuestion(){
+    function createQuestion(question){
       totalQuestions++;
       let totalAnswers = 0;
 
@@ -105,6 +120,90 @@
 
       const newTitle = document.createElement("h3");
       newTitle.textContent = `Question ${totalQuestions}`;
+      newTitle.id = `question-title`;
+
+
+      const newInput = document.createElement("input");
+      newInput.type = "text";
+      newInput.placeholder = "Enter Question";
+      newInput.className="question-text";
+      newInput.value = question.question_text;
+
+      const answerBlock = document.createElement("div");
+      
+      const answerButton = document.createElement("button");
+      answerButton.textContent = "+";
+      answerButton.addEventListener("click", function(){
+        createBlankAnswer(answerBlock, totalQuestions, totalAnswers);
+      });
+      answerButton.style.marginBottom = "10px";
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", function(){
+         deleteButton.parentElement.remove()
+         totalQuestions--;
+         renumber_questions();
+      });
+      deleteButton.style.marginBottom = "10px";
+
+      wrapper.appendChild(newTitle);
+      wrapper.appendChild(newInput);
+      wrapper.appendChild(answerBlock);
+      wrapper.appendChild(answerButton);
+      wrapper.appendChild(deleteButton);
+
+      container.appendChild(wrapper);
+
+      question.answers.forEach(answer => {
+          createAnswer(answer, answerBlock, totalQuestions, totalAnswers);
+        })
+
+
+    }
+
+    function createBlankAnswer(answerBlock, questionCount, answerCount){
+      const answerInput = document.createElement("input");
+      answerInput.type = "text";
+      answerInput.placeholder = "Type Answer Here";
+
+      const correctCheckBox = document.createElement("input");
+      correctCheckBox.type = "checkbox";
+      correctCheckBox.className = "exam-answer-check";
+
+
+      const newAnswer = document.createElement("div")
+      newAnswer.className = "exam-answer-block";
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "-";
+      deleteButton.className = "exam-answer-delete"
+      deleteButton.addEventListener("click", function(){ 
+        //answerCount--;
+        newAnswer.remove()
+        console.log(answerCount)
+      });
+
+      newAnswer.appendChild(deleteButton)
+      newAnswer.appendChild(answerInput)
+      newAnswer.appendChild(correctCheckBox)
+
+      answerBlock.appendChild(newAnswer)
+
+    }
+
+    function createBlankQuestion(){
+      totalQuestions++;
+      let totalAnswers = 0;
+
+      const container = document.getElementById("question-block");
+
+      const wrapper = document.createElement("div");
+      wrapper.className="question-wrapper";
+
+      const newTitle = document.createElement("h3");
+      newTitle.textContent = `Question ${totalQuestions}`;
+      newTitle.id = `question-title`;
 
 
       const newInput = document.createElement("input");
@@ -138,11 +237,8 @@
 
       container.appendChild(wrapper);
 
-      createAnswer(answerBlock, totalQuestions, totalAnswers);
-
     }
-
-    createQuestion();
+    
 
     async function publishExam(){
       let isValid = true;
@@ -212,6 +308,10 @@
       }
       
     }
+
+    fillCourseInfo();
+    getCurrentExamInfo();
+
   </script>
 </body>
 </html>

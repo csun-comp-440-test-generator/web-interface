@@ -103,16 +103,14 @@
       window.location.href = "view_exams.html";
     }
 
-    function goToAddSection(){
-      //Add register for TA sections here
-    }
-
       findSections();
       fillInfo();
 
     let role = localStorage.getItem("role");
     if (role === "assistant")
       document.getElementById("create-course-btn").classList.add("hidden");
+    else if (role==="instructor")
+      document.getElementById("add-course-btn").classList.add("hidden");
 
     document.getElementById("section-dropdown").addEventListener("change", function () {
       if (this.value !== "") {

@@ -5,37 +5,55 @@
   <title>Create Course</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body onload="findExistingClasses()">
+<body>
   <div class="exam-container">
-    <h2>Create Section</h2>
+    <h2 id="header"></h2>
     <h3>Courses</h3>
-    <!--<ul style="padding:0" id="class-list">
-    </ul>-->
+
     <div style="padding-bottom: 10px;">
       <select id="course-dropdown">
       </select> 
     </div>
     <div style="padding-bottom: 10px;">
-      <!--<input type="text" id="section-id" placeholder="Section Code">-->
     </div>
 
-    <button onclick="createSection()">Create Section</button>
+    <button id="section-btn"></button>
     <p id="course-message" style="color: red; margin-top: 10px;"></p>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
+    function setHeader(role){
+      if (role === "instructor"){
+        const header = document.getElementById("header");
+        header.textContent = "Create Section";
+      }
+      else if (role === "assistant"){
+        const header = document.getElementById("header");
+        header.textContent = "Register Section";
+      }
+    }
+
+    function setButton(role){
+      if (role === "instructor"){
+        const btn = document.getElementById("section-btn");
+        btn.textContent = "Create Section";
+        btn.onclick=createSection
+      }
+      else if (role === "assistant"){
+        const btn = document.getElementById("section-btn");
+        btn.textContent = "Register Section";
+        btn.onclick=registerAssistant
+      }
+    }
+
     async function findExistingClasses(){
       const courseDropdown = document.getElementById("course-dropdown");
-      courseDropdown.innerHTML = `<option selected disabled>Choose an option</option>`;
+      courseDropdown.innerHTML = `<option selected disabled value=-1>Choose an option</option>`;
       const classes = await getClasses()
       classes.forEach(element => {
         const classOption = document.createElement("option");
-        //classElement.innerHTML=`
-        //  <strong> Class:</strong> ${element.name}<br>
-        //  <strong>ID: </strong> ${element.id} <br>
-        //`;
         let classInfo = `${element.id} - ${element.name}`
         classOption.value = element.id;
         classOption.textContent = classInfo;
@@ -43,31 +61,66 @@
         });
 
       }
+
+    async function findOpenSections(){
+      const id = localStorage.getItem("currentUser");
+      const courseDropdown = document.getElementById("course-dropdown");
+      courseDropdown.innerHTML = `<option selected disabled value=-1>Choose an option</option>`;
+      const classes = await getOpenSections(id)
+      classes.forEach(element => {
+        const classOption = document.createElement("option");
+        let classInfo = `${element.course_id}-${element.section_id}: ${element.course_name}`
+        classOption.value = element.section_id;
+        classOption.textContent = classInfo;
+        courseDropdown.appendChild(classOption);
+        });
+
+      }
     
     async function createSection() {
-      //ADD IN CHECK TO MAKE SURE A DUPLICATE SECTION DOESN'T EXIST
-      //const classes = await getClasses()
-      //let sectionIDElement = document.getElementById("section-id");
       let messageElement = document.getElementById("course-message");
-
-      //let sectionID = sectionIDElement.value;
-
       let courseDropdown = document.getElementById("course-dropdown");
       let courseID = courseDropdown.value;
-      teacherID = localStorage.getItem("currentUser");
+      const teacherID = localStorage.getItem("currentUser");
 
-      // if (sectionID == NaN){
-      //   messageElement.textContent = "Please fill all fields.";
-      //   return;
-      // }
-
-      //sectionID, courseID, teacherID, assistantID
       await addCourse(parseInt(courseID), parseInt(teacherID));
 
       messageElement.style.color = "green";
       messageElement.textContent = "Section added.";
       setTimeout(() => window.location.href = "instructor.html", 1000);
     }
+
+    async function registerAssistant(){
+      let res;
+      let messageElement = document.getElementById("course-message");
+      let courseDropdown = document.getElementById("course-dropdown");
+      let sectionID = courseDropdown.value;
+      const id = localStorage.getItem("currentUser");
+
+
+      if(parseInt(sectionID) > 0){
+        res = await addAssistantToCourse(parseInt(sectionID), parseInt(id));
+      }
+      try{
+        if(res.ok){
+          messageElement.style.color = "green";
+          messageElement.textContent = "Succesfully Registered To Section";
+          setTimeout(() => window.location.href = "instructor.html", 1000);
+        }
+      }
+      catch (e){
+        console.log(e)
+      }
+    }
+
+    const role = localStorage.getItem("role");
+    setHeader(role);
+    setButton(role);
+
+    if (role==="instructor")
+      findExistingClasses()
+    else if (role === "assistant")
+      findOpenSections();
   </script>
 </body>
 </html>
