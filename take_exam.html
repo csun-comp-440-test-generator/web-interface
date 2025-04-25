@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Take Exam</title>
@@ -8,12 +9,15 @@
     .question {
       margin-bottom: 30px;
     }
+
     .option-row {
       margin: 10px 0;
     }
+
     .option-row label {
       font-size: 16px;
     }
+
     #timer {
       color: red;
       font-weight: bold;
@@ -22,121 +26,190 @@
     }
   </style>
 </head>
+
 <body>
   <div class="exam-container">
     <div id="header-wrapper">
-            <div style="margin-bottom: 20px;" id="card">
-                <div id="content">
-                    <div id="section-info"></div>
-                    <div id="exam-info"></div>
-                    <button onclick="startExam()" id="start-button" style="margin-bottom: 10px;">Start Exam</button>
-                    <button onclick="window.location.href ='student_course.html';" id="back-button">Back</button>
-                </div>
-            </div> 
+      <div style="margin-bottom: 20px;" id="card">
+        <div id="content">
+          <div id="section-info"></div>
+          <div id="exam-info"></div>
+          <div id="exam-section" class="hidden">
+            <h3 id="timer">Timer</h3>
+            <div id="exam-questions"></div>
+            <button id="submit-exam-button">Submit</button>
+          </div>
+
+          <div id="result-view" class="hidden">
+            <h3>Result</h3>
+            <p id="score-percent">0%</p>
+            <p id="score-details">0/0 Points</p>
+            <div id="results-section" class="hidden"></div>
+            <div id="results-questions"></div>
+          </div>
+          <p id="err-msg" style="color:red; text-align: center; font-style: italic;"></p>
+          <button onclick="startExam()" id="start-button" style="margin-bottom: 10px;">Start Exam</button>
+          <button onclick="window.location.href ='student_course.html';" id="back-button">Back</button>
+        </div>
+      </div>
     </div>
 
-    <div id="exam-section" class="hidden">
-      <h3 id="timer">Timer</h3>
-      <div id="exam-questions"></div>
-      <button id="submit-exam-button">Submit</button>
-    </div>
 
-    <div id="result-view" class="hidden">
-      <h3>Result</h3>
-      <p id="score-percent">0%</p>
-      <p id="score-details">0/0 Points</p>
-    </div>
   </div>
 
-  <p id="no-exam-message" style="color:red; display:none;">No exams for this course.</p>
+
 
   <script src="data.js"></script>
   <script src="script.js"></script>
 
   <script>
     var exam;
-    async function getCourseInfo(){
-        const section_id = localStorage.getItem("selectedCourse");
-        const section_info = await getSectionInfo(parseInt(section_id));
+    var exam_info;
+    var startTime;
+    var endTime;
+    var duration;
 
-        document.getElementById("section-info").innerHTML = `
+    async function getCourseInfo() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const section_info = await getSectionInfo(parseInt(section_id));
+
+      document.getElementById("section-info").innerHTML = `
         <h3>${section_info.course}-${section_info.id}: 
         ${section_info.course_name}</h3>`;
 
     }
-    async function getCurrentExam(){
-        const section_id = localStorage.getItem("selectedCourse");
-        const exam_id = localStorage.getItem("selectedExam");
-        
-        const exam_info = await getExamInfo(exam_id, section_id);
-        exam = await getExam(exam_id);
-        const question_count = await getExamQuestionCount(exam_id);
 
-        document.getElementById("exam-info").innerHTML = `
-        <h3>${exam_info.name}</h3>
-        <p>Questions: ${question_count}</p>`;
-        //Need to add duration
+    function displayTimeStamp(exam_info) {
+      const utcStartDate = new Date(exam_info.start_time + "Z")
+      const utcEndDate = new Date(exam_info.end_time + "Z")
+
+      const localDate = utcStartDate.toLocaleDateString();
+      const localStartTime = new Date(utcStartDate).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+      const localEndTime = new Date(utcEndDate).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      //const durationMinutes = Math.floor((utcEndDate-utcStartDate)/60000);
+
+      const TimeStamp = {
+        date: localDate,
+        startTime: localStartTime,
+        endTime: localEndTime
+      }
+
+      return TimeStamp
     }
 
+    async function getCurrentExam() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const exam_id = localStorage.getItem("selectedExam");
+
+      exam_info = await getExamInfo(exam_id, section_id);
+      exam = await getExam(exam_id);
+      const question_count = await getExamQuestionCount(exam_id);
+      const timeStamp = displayTimeStamp(exam_info);
+      startTime = exam_info.start_time;
+      endTime = exam_info.end_time;
+
+      document.getElementById("exam-info").innerHTML = `
+        <div style="margin-bottom:20px;">
+        <h3>${exam_info.name}</h3>
+        Questions: <b>${question_count}</b><p>
+        Date: <b>${timeStamp.date}</b><p>
+        Start: <b>${timeStamp.startTime}</b><p>
+        Due: <b>${timeStamp.endTime}</b>
+        </div>`;
+    }
+
+
     function startExam() {
-        var container = document.getElementById("exam-questions");
-        var startButton = document.getElementById("start-button");
-        var backButton = document.getElementById("back-button");
-        startButton.classList.add("hidden");
-        backButton.classList.add("hidden");
-        container.innerHTML = "";
-        let q = 0;
+      const currentDateTime = new Date();
+      const startDateTime = new Date(startTime + "Z");
+      const endDateTime = new Date(endTime + "Z");
 
-        const exam_data = exam;
+      const durationMinutes = Math.floor((endDateTime - currentDateTime) / 60000)
+      duration = durationMinutes;
 
-        exam_data.questions.forEach(question => {
-            var questionDiv = document.createElement("div");
-            questionDiv.className = "question";
-            q++;
+      if (currentDateTime < startDateTime) {
+        const err = document.getElementById("err-msg");
+        err.textContent = "This exam in not yet available.";
+        return
+      }
+      else if (currentDateTime >= endDateTime) {
+        const err = document.getElementById("err-msg");
+        err.textContent = "This exam in no longer available.";
+        return
+      }
+      else {
+        const err = document.getElementById("err-msg");
+        err.textContent = "";
+      }
 
-            var questionTitle = document.createElement("h4");
-            questionTitle.textContent = (q) + ") " + question.question_text;
-            questionDiv.appendChild(questionTitle);
 
-            var answersWrapper = document.createElement("div");
-            answersWrapper.className = "answers";
+      var container = document.getElementById("exam-questions");
+      var startButton = document.getElementById("start-button");
+      var backButton = document.getElementById("back-button");
+      startButton.classList.add("hidden");
+      backButton.classList.add("hidden");
+      container.innerHTML = "";
+      let q = 0;
 
-            let num_correct = 0;
+      const exam_data = exam;
 
-            question.answers.forEach(answer => {
-                if(answer.is_correct)
-                    num_correct++;
-            })
+      exam_data.questions.forEach(question => {
+        var questionDiv = document.createElement("div");
+        questionDiv.className = "question";
+        q++;
 
-            question.answers.forEach(answer => {
-                var answerWrapper = document.createElement("div");
-                answerWrapper.className = "exam-answer";
-                var label = document.createElement("label");
+        var questionTitle = document.createElement("h4");
+        questionTitle.textContent = (q) + ") " + question.question_text;
+        questionDiv.appendChild(questionTitle);
 
-                if(num_correct > 1){
+        var answersWrapper = document.createElement("div");
+        answersWrapper.className = "answers";
 
-                    var opt = document.createElement("input");
-                    opt.type = "check";
-                    opt.name = "question-" + question.id;
-                    opt.value = answer.id;
-                    opt.className = "exam-answer-check";
-                }else{
+        let num_correct = 0;
 
-                    var opt = document.createElement("input");
-                    opt.type = "radio";
-                    opt.name = "question-" + question.id;
-                    opt.value = answer.id;
-                    opt.className = "exam-answer-check";
+        question.answers.forEach(answer => {
+          if (answer.is_correct)
+            num_correct++;
+        })
 
-                }
+        question.answers.forEach(answer => {
+          var answerWrapper = document.createElement("div");
+          answerWrapper.className = "exam-answer";
+          var label = document.createElement("label");
 
-                label.appendChild(document.createTextNode(answer.answer_text));
-                answerWrapper.appendChild(label);
-                answerWrapper.appendChild(opt);
+          if (num_correct > 1) {
 
-                answersWrapper.appendChild(answerWrapper);
-                
-            });
+            var opt = document.createElement("input");
+            opt.type = "check";
+            opt.name = "question-" + question.id;
+            opt.value = answer.id;
+            opt.className = "exam-answer-check";
+          } else {
+
+            var opt = document.createElement("input");
+            opt.type = "radio";
+            opt.name = "question-" + question.id;
+            opt.value = answer.id;
+            opt.className = "exam-answer-check";
+
+          }
+
+          label.appendChild(document.createTextNode(answer.answer_text));
+          answerWrapper.appendChild(label);
+          answerWrapper.appendChild(opt);
+
+          answersWrapper.appendChild(answerWrapper);
+
+        });
 
         questionDiv.appendChild(answersWrapper);
         container.appendChild(questionDiv);
@@ -147,81 +220,160 @@
       document.querySelector('#submit-exam-button').addEventListener('click', function (e) {
         const confirmed = confirm('All submissions are final, are you sure you want to submit the exam?');
         if (confirmed) {
-            gradeExam();
+          gradeExam();
         }
-        });
+      });
 
-    //   var totalTime = exam.timeLimit * 60;
-    //   var timer = document.getElementById("timer");
+      var totalTime = duration * 60;
+      var timer = document.getElementById("timer");
 
-    //   function updateCountdown() {
-    //     var mins = Math.floor(totalTime / 60);
-    //     var secs = totalTime % 60;
-    //     timer.textContent = "Time Left: " + mins + ":" + (secs < 10 ? "0" + secs : secs);
-    //     if (totalTime <= 0) {
-    //       clearInterval(examTimer);
-    //       document.getElementById("submit-exam-button").click();
-    //     }
-    //     totalTime--;
-    //   }
+      function updateCountdown() {
+        var mins = Math.floor(totalTime / 60);
+        var secs = totalTime % 60;
+        timer.textContent = "Time Left: " + mins + ":" + (secs < 10 ? "0" + secs : secs);
+        if (totalTime <= 0) {
+          clearInterval(examTimer);
+          document.getElementById("submit-exam-button").click();
+        }
+        totalTime--;
+      }
 
-    //   updateCountdown();
-    //   var examTimer = setInterval(updateCountdown, 1000);
+      updateCountdown();
+      var examTimer = setInterval(updateCountdown, 1000);
 
-    //   document.getElementById("submit-exam-button").onclick = function () {
-    //     clearInterval(examTimer);
+      // document.getElementById("submit-exam-button").onclick = function () {
+      //   clearInterval(examTimer);
+
     }
 
-    async function gradeExam(){ 
 
-        let score = 0;
-        let q=0;
-        
-        exam.questions.forEach(question => {
-            q++;
-            const selection = document.querySelector(`input[name="question-${q}"]:checked`);
 
-            if (selection != null){
-                const selectedAnswer = selection.value;                
-                question.answers.forEach(answer => {
-                    if (selectedAnswer == answer.id && answer.is_correct)
-                        score++;
-                })          
+    async function gradeExam() {
+
+      let score = 0;
+      let incorrect = [];
+
+      window.scrollTo(0, 0);
+
+      exam.questions.forEach((question, index) => {
+        const selection = document.querySelector(`input[name="question-${index+1}"]:checked`);
+        let isCorrect = false;
+
+        if (selection != null) {
+          const selectedAnswer = selection.value;
+          question.answers.forEach(answer => {
+            if (selectedAnswer == answer.id && answer.is_correct){
+              score++;
+              isCorrect = true;
             }
-        
-        });
-
-        const percent = Math.round((score / exam.questions.length) * 100);
-
-        document.getElementById("exam-section").classList.add("hidden");
-        document.getElementById("result-view").classList.remove("hidden");
-
-        document.getElementById("score-percent").textContent = percent + "%";
-        document.getElementById("score-details").textContent = score + "/" + exam.questions.length + " Points";
-
-        const student_id = localStorage.getItem("currentUser");
-        const test_id = exam.id;
-
-        let attempt = await getExamAttempts(student_id,test_id);
-
-        const submission={
-            student_id:student_id,
-            test_id:test_id,
-            attempt:attempt,
-            score:score / exam.questions.length,
+          })
+        }
+        else{
+          isCorrect = false;
         }
 
-        await submitExam(submission);
+        if (!isCorrect){
+          incorrect.push(question)
+        }
 
-        const section_id = localStorage.getItem("selectedCourse");
-        await updateGrade(parseInt(student_id), parseInt(section_id))
+      });
 
-        var backButton = document.getElementById("back-button");
-        backButton.classList.remove("hidden");
+      showIncorrectAnswers(incorrect);
 
+      const percent = Math.round((score / exam.questions.length) * 100);
+
+      document.getElementById("exam-section").classList.add("hidden");
+      document.getElementById("result-view").classList.remove("hidden");
+
+      document.getElementById("score-percent").textContent = percent + "%";
+      document.getElementById("score-details").textContent = score + "/" + exam.questions.length + " Points";
+
+      const student_id = localStorage.getItem("currentUser");
+      const test_id = exam_info.exam_id;
+
+      let attempt = await getExamAttempts(student_id, test_id);
+
+      const submission = {
+        student_id: student_id,
+        test_id: test_id,
+        attempt: attempt,
+        score: score / exam.questions.length,
       }
-    
 
+      await submitExam(submission);
+
+      const section_id = localStorage.getItem("selectedCourse");
+      await updateGrade(parseInt(student_id), parseInt(section_id))
+
+      var backButton = document.getElementById("back-button");
+      backButton.classList.remove("hidden");
+
+    }
+
+    function showIncorrectAnswers(incorrectAnswers) {
+      var container = document.getElementById("results-questions");
+        incorrectAnswers.forEach((question, index) => {
+        var questionDiv = document.createElement("div");
+        questionDiv.className = "question";
+
+        var questionTitle = document.createElement("h4");
+        questionTitle.textContent = (incorrectAnswers[index].id) + ") " + question.question_text;
+        questionTitle.style.textAlign = "left";
+        questionDiv.appendChild(questionTitle);
+
+        var answersWrapper = document.createElement("div");
+        answersWrapper.className = "answers";
+
+        let num_correct = 0;
+
+        question.answers.forEach(answer => {
+          if (answer.is_correct)
+            num_correct++;
+        })
+
+        question.answers.forEach(answer => {
+          var answerWrapper = document.createElement("div");
+          answerWrapper.className = "exam-answer";
+          var label = document.createElement("label");
+
+          if (num_correct > 1) {
+
+            var opt = document.createElement("input");
+            opt.type = "check";
+            opt.name = "question-" + question.id;
+            opt.value = answer.id;
+            opt.className = "exam-answer-check";
+          } else {
+
+            var opt = document.createElement("input");
+            opt.type = "radio";
+            opt.name = "question-" + question.id;
+            opt.value = answer.id;
+            opt.className = "exam-answer-check";
+            opt.disabled = true;
+            if (answer.is_correct){
+              opt.checked = true;
+            }
+          }
+
+          label.appendChild(document.createTextNode(answer.answer_text));
+          if (answer.is_correct){
+              label.style.color = "red";
+            }
+          answerWrapper.appendChild(label);
+          answerWrapper.appendChild(opt);
+
+          answersWrapper.appendChild(answerWrapper);
+
+        });
+
+        questionDiv.appendChild(answersWrapper);
+        container.appendChild(questionDiv);
+      });
+
+      document.getElementById("results-section").classList.remove("hidden");
+
+    }
 
     // document.getElementById("section-dropdown").addEventListener("change", function () {
     //   if (this.value !== "") {
@@ -234,4 +386,5 @@
 
   </script>
 </body>
+
 </html>

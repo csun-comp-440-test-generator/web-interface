@@ -86,10 +86,10 @@
       let exams = await getExams(section_id);
       if (exams.length > 0) {
         document.getElementById("view-exams-btn").classList.remove("hidden");
-        if (role != "assistant")
-          document.getElementById("create-exam-btn").classList.remove("hidden");
       }
-    }
+      if (role != "assistant")
+            document.getElementById("create-exam-btn").classList.remove("hidden");
+        }
 
     function goToExam() {
       let section_id = document.getElementById("section-dropdown").value;

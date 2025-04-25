@@ -78,14 +78,42 @@
       displayExam(exam, exam_info);
     }
 
+    function getDueDates(){
+      const dueDate = document.getElementById("due-date-picker").value;
+      const startTime = document.getElementById("start-time-picker").value;
+      const duration = parseInt(document.getElementById("duration-input").value);
+
+      if (dueDate && startTime && !isNaN(duration)) {
+        const startDateTime = new Date(`${dueDate}T${startTime}:00`);
+        const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+        const DueDates = {
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString()
+        };
+
+        return DueDates;
+      }
+    }
+
+    function displayTimeStamp(exam_info){
+      const utcStartDate = new Date(exam_info.start_time + "Z")
+      const utcEndDate = new Date(exam_info.end_time + "Z")
+
+      const localDate = utcStartDate.toLocaleDateString("en-CA");
+      const localTime = utcStartDate.toTimeString().slice(0,5);
+      const durationMinutes = Math.floor((utcEndDate-utcStartDate)/60000);
+
+      document.getElementById("due-date-picker").value = localDate;
+      document.getElementById("start-time-picker").value = localTime;
+      document.getElementById("duration-input").value = durationMinutes;
+    }
+
     async function displayExam(exam, exam_info) {
       const examTitle = document.getElementById("exam-title");
       examTitle.value = `${exam_info.name}`;
-
-      // const dueDate = document.getElementById("due-date-picker");
-      // const starTime = document.getElementById("start-time-picker");
-      // const duration = document.getElementById("duration");
       
+      displayTimeStamp(exam_info)
 
       exam.questions.forEach(question => {
         createQuestion(question);
@@ -265,10 +293,16 @@
 
     async function udpateExam() {
       let isValid = true;
+      const dueDates = getDueDates();
       const sectionID = localStorage.getItem("selectedCourse");
       const examTitle = document.getElementById("exam-title").value;
 
-      const exam = { section_id: sectionID, exam_name: examTitle, questions: [] }
+      const exam = { 
+        section_id: sectionID, 
+        exam_name: examTitle, 
+        start_time: dueDates.start_time, 
+        end_time: dueDates.end_time, 
+        questions: [] }
 
       const questionWrappers = document.querySelectorAll('.question-wrapper');
 

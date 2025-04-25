@@ -1,23 +1,56 @@
-function login() {
+async function login() {
   let role = document.getElementById("role").value;
-  let userId = document.getElementById("user-id").value;
+  let userID = document.getElementById("user-id").value;
   //let password = document.getElementById("password").value;
   let errorMessage = document.getElementById("login-error");
 
-  if (userId === "") {
-    errorMessage.style.display = "block";
-    return;
-  }
-
   localStorage.setItem("role", role);
-  localStorage.setItem("currentUser", userId);
+  localStorage.setItem("currentUser", userID);
   //localStorage.setItem("password", password);
 
-  if (role === "instructor" || role ==="assistant") {
-    window.location.href = "instructor.html";
-  } else if (role === "student") {
-    window.location.href = "student.html";
+  let isValid = await validateUser(role,userID);
+
+  if (isValid){
+    if (role === "instructor" || role ==="assistant") {
+      window.location.href = "instructor.html";
+    } else if (role === "student") {
+      window.location.href = "student.html";
+    }
   }
+  else{
+    errorMessage.textContent="Unable to Login. Please try again.";
+    errorMessage.classList.remove("hidden");
+  }
+}
+
+async function validateUser(role, id){
+  let url;
+  if (role ==="instructor"){
+        url = `http://127.0.0.1:8000/teacher/validate?id=${id}`
+  }
+  else if (role ==="assistant"){
+    url = `http://127.0.0.1:8000/assistant/validate?id=${id}`
+  }
+  else if (role ==="student"){
+    url = `http://127.0.0.1:8000/student/validate?id=${id}`
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }  
 }
 
 //INSTRUCTOR.HTML
