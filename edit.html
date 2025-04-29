@@ -32,6 +32,11 @@
       </div>
     </div>
 
+    <div style="margin-bottom: 10px;">
+      <h4 style="margin: 10px 0 5px 0;">Total Questions:</h4>
+      <input type="number" id="max-questions" placeholder="Number of Exam Questions">
+    </div>
+
     <div id="question-form">
       <div id="question-block" style="padding:15px">
 
@@ -114,6 +119,8 @@
       examTitle.value = `${exam_info.name}`;
       
       displayTimeStamp(exam_info)
+      const maxQuestions = document.getElementById("max-questions");
+      maxQuestions.value = exam_info.max_questions;
 
       exam.questions.forEach(question => {
         createQuestion(question);
@@ -296,12 +303,14 @@
       const dueDates = getDueDates();
       const sectionID = localStorage.getItem("selectedCourse");
       const examTitle = document.getElementById("exam-title").value;
+      const maxQuestions = document.getElementById("max-questions").value;
 
       const exam = { 
         section_id: sectionID, 
         exam_name: examTitle, 
         start_time: dueDates.start_time, 
         end_time: dueDates.end_time, 
+        max_questions:maxQuestions,
         questions: [] }
 
       const questionWrappers = document.querySelectorAll('.question-wrapper');
@@ -351,6 +360,12 @@
           answers: answers
         });
       });
+
+      if (exam.questions.length < parseInt(maxQuestions)){
+          document.getElementById("error-message").textContent = "Number of questions in the question bank must be equal to or greater than the total questions per exam.";
+          isValid = false;
+          return;
+        }
 
       if (isValid) {
         //console.log(JSON.stringify(exam, null, 2));

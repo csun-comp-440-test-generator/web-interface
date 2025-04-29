@@ -12,6 +12,7 @@
     <h2><span id="course-info"></span></h2>
     <h2><span id="section-info"></span></h2>
 
+    <h4 style="margin: 10px 0 5px 0;">Exam:</h4>
     <input type="text" id="exam-title" placeholder="Exam Title" style="margin-bottom: 10px;">
 
     <div style="display: flex; flex-direction: row; max-width: 400px; align-items: center; margin-bottom: 10px; margin-top: 10px;">
@@ -32,6 +33,13 @@
       </div>
     </div>
 
+    <div style="margin-bottom: 10px;">
+      <h4 style="margin: 10px 0 5px 0;">Total Questions:</h4>
+      <input type="number" id="max-questions" placeholder="Number of Exam Questions">
+    </div>
+
+    <button onclick="generateQuestions()">Create Exam</button>
+
     <div id="question-form">
       <div id="question-block" style="padding:15px">
 
@@ -41,7 +49,7 @@
     <div style="height: 10px;"></div>
     <button id="add-question-btn" onclick="createQuestion()">New Question</button>
     <div style="height: 10px;"></div>
-    <button id="submit-exam-btn" onclick="publishExam()">Publish Exam</button>
+    <button id="submit-exam-btn" onclick="publishExam()">Publish Question Bank</button>
     <div style="height: 10px;"></div>
     <button onclick="window.location.href='instructor.html'">Cancel</button>
     <div style="height: 10px;"></div>
@@ -163,7 +171,12 @@
 
     }
 
-    createQuestion();
+    function generateQuestions(){
+      const maxQuestions = parseInt(document.getElementById("max-questions").value);
+      for(let i = 0; i < maxQuestions; i++){
+        createQuestion();
+      }
+    }
 
     function getDueDates(){
       const dueDate = document.getElementById("due-date-picker").value;
@@ -188,14 +201,22 @@
       
       const dueDates = getDueDates();
 
+      if (dueDates == null){
+        isValid = false;
+        document.getElementById("error-message").textContent = "Please fill out all fields.";
+        return;
+      }
+
       const sectionID = localStorage.getItem("selectedCourse");
       const examTitle = document.getElementById("exam-title").value;
+      const maxQuestions = document.getElementById("max-questions").value;
 
       const exam = { 
         section_id: sectionID, 
         exam_name: examTitle, 
         start_time: dueDates.start_time, 
         end_time: dueDates.end_time, 
+        max_questions:maxQuestions,
         questions: [] }
 
       const questionWrappers = document.querySelectorAll('.question-wrapper');
@@ -245,6 +266,12 @@
           answers: answers
         });
       });
+
+      if (exam.questions.length < parseInt(maxQuestions)){
+          document.getElementById("error-message").textContent = "Number of questions in the question bank must be equal to or greater than the total questions per exam.";
+          isValid = false;
+          return;
+        }
 
       if (isValid) {
         console.log(JSON.stringify(exam, null, 2));

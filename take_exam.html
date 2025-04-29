@@ -111,7 +111,7 @@
       const exam_id = localStorage.getItem("selectedExam");
 
       exam_info = await getExamInfo(exam_id, section_id);
-      exam = await getExam(exam_id);
+      exam = await getGeneratedExam(exam_id);
       const question_count = await getExamQuestionCount(exam_id);
       const timeStamp = displayTimeStamp(exam_info);
       startTime = exam_info.start_time;
@@ -256,7 +256,7 @@
       window.scrollTo(0, 0);
 
       exam.questions.forEach((question, index) => {
-        const selection = document.querySelector(`input[name="question-${index+1}"]:checked`);
+        const selection = document.querySelector(`input[name="question-${question.id}"]:checked`);
         let isCorrect = false;
 
         if (selection != null) {
@@ -273,7 +273,11 @@
         }
 
         if (!isCorrect){
-          incorrect.push(question)
+          const incorrectQuestion = {
+            number: index+1,
+            question: question
+          }
+          incorrect.push(incorrectQuestion)
         }
 
       });
@@ -312,12 +316,12 @@
 
     function showIncorrectAnswers(incorrectAnswers) {
       var container = document.getElementById("results-questions");
-        incorrectAnswers.forEach((question, index) => {
+        incorrectAnswers.forEach((incorrect, index) => {
         var questionDiv = document.createElement("div");
         questionDiv.className = "question";
 
         var questionTitle = document.createElement("h4");
-        questionTitle.textContent = (incorrectAnswers[index].id) + ") " + question.question_text;
+        questionTitle.textContent = incorrect.number + ") " + incorrect.question.question_text;
         questionTitle.style.textAlign = "left";
         questionDiv.appendChild(questionTitle);
 
@@ -326,12 +330,12 @@
 
         let num_correct = 0;
 
-        question.answers.forEach(answer => {
+        incorrect.question.answers.forEach(answer => {
           if (answer.is_correct)
             num_correct++;
         })
 
-        question.answers.forEach(answer => {
+        incorrect.question.answers.forEach(answer => {
           var answerWrapper = document.createElement("div");
           answerWrapper.className = "exam-answer";
           var label = document.createElement("label");
@@ -340,14 +344,14 @@
 
             var opt = document.createElement("input");
             opt.type = "check";
-            opt.name = "question-" + question.id;
+            opt.name = "question-" + incorrect.question.id;
             opt.value = answer.id;
             opt.className = "exam-answer-check";
           } else {
 
             var opt = document.createElement("input");
             opt.type = "radio";
-            opt.name = "question-" + question.id;
+            opt.name = "question-" + incorrect.question.id;
             opt.value = answer.id;
             opt.className = "exam-answer-check";
             opt.disabled = true;

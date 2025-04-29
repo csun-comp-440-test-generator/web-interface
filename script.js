@@ -543,6 +543,28 @@ async function getExam(exam_id) {
   }
 }
 
+async function getGeneratedExam(exam_id) {
+
+  let url = `http://127.0.0.1:8000/test/generate_test_questions_from_bank?test_id=${exam_id}`
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+    })
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      console.error('FASTAPI Error Response:', errorResponse)
+      throw new Error(`Response status: ${res.status}`);
+    }
+    const json = await res.json();
+    return json
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
 async function getExamQuestionCount(exam_id) {
   //REVAMP TO GET MAX QUESTIONS FROM GENERATED TEST
   let url = `http://127.0.0.1:8000/test/retrieve_question_count?test_id=${exam_id}`
