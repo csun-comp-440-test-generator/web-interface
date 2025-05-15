@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Take Exam</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .question {
+      margin-bottom: 30px;
+    }
+
+    .option-row {
+      margin: 10px 0;
+    }
+
+    .option-row label {
+      font-size: 16px;
+    }
+
+    #timer {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="exam-container">
+    <div id="header-wrapper">
+      <div style="margin-bottom: 20px;" id="card">
+        <div id="content">
+          <div id="section-info"></div>
+          <div id="exam-info"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="exam-section">
+      <h3 id="timer">Timer</h3>
+      <div id="exam-questions"></div>
+    </div>
+    <button id="save-button">Save Changes</button>
+
+    <div id="result-view" class="hidden">
+      <h3>Result</h3>
+      <p id="score-percent">0%</p>
+      <p id="score-details">0/0 Points</p>
+    </div>
+    <button onclick="window.location.href ='view_exams.html';" id="back-button" style="margin-top: 10px;">Back</button>
+  </div>
+
+
+  <p id="no-exam-message" style="color:red; display:none;">No exams for this course.</p>
+
+  <div id="editModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+background:#fff; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.5); z-index:1000; border-radius: 15px;">
+    <h3>Edit Question</h3>
+    <textarea id="editInput" rows="4" cols="50"></textarea><br><br>
+    <button id="saveEdit" style="margin-bottom: 10px;">Save</button>
+    <button id="cancelEdit">Cancel</button>
+  </div>
+  <div id="modalBackdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+background:rgba(0,0,0,0.5); z-index:999;"></div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    var exam;
+    var editIcon = `
+      <svg fill="#333333" height="100px" width="100px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 306.637 306.637" xml:space="preserve">
+            <path
+              d="M12.809,238.52L0,306.637l68.118-12.809l184.277-184.277l-55.309-55.309L12.809,238.52z M60.79,279.943l-41.992,7.896 l7.896-41.992L197.086,75.455l34.096,34.096L60.79,279.943z">
+            </path>
+            <path
+              d="M251.329,0l-41.507,41.507l55.308,55.308l41.507-41.507L251.329,0z M231.035,41.507l20.294-20.294l34.095,34.095 L265.13,75.602L231.035,41.507z">
+            </path>
+    </svg>`
+
+    async function getCourseInfo() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const section_info = await getSectionInfo(parseInt(section_id));
+
+      document.getElementById("section-info").innerHTML = `
+        <h3>${section_info.course}-${section_info.id}: 
+        ${section_info.course_name}</h3>`;
+
+    }
+    async function getCurrentExamInfo() {
+      const section_id = localStorage.getItem("selectedCourse");
+      const exam_id = localStorage.getItem("selectedExam");
+
+      exam = await getExam(exam_id, section_id);
+      const question_count = await getExamQuestionCount(exam_id);
+
+      document.getElementById("exam-info").innerHTML = `
+        <h3>${exam.name}</h3>
+        <p>Questions: ${question_count}</p>`;
+      //Need to add duration
+
+      displayExam(exam);
+    }
+
+    async function displayExam(exam_data) {
+      var container = document.getElementById("exam-questions");
+      container.innerHTML = "";
+
+      exam_data.questions.forEach((question, index) => {
+        var icon = document.createElement("button");
+        icon.addEventListener("click", () => editQuestion(index + 1))
+        icon.className="icon-button"
+        icon.innerHTML = editIcon;
+        icon.style.height = "24px";
+        icon.style.width = "24px"
+
+        var questionDiv = document.createElement("div");
+        questionDiv.className = "question";
+
+
+        var questionTitleWrapper = document.createElement("div");
+        questionTitleWrapper.style.display = "flex";
+        questionTitleWrapper.style.flex = "row";
+        questionTitleWrapper.style.justifyContent = "space-between";
+        questionTitleWrapper.style.alignItems = "center";
+
+        var questionTitle = document.createElement("h4");
+        questionTitle.textContent = (index + 1) + ") " + question.question_text;
+        questionTitle.style.whiteSpace = "normal";
+        questionTitle.style.wordWrap = "break-word";
+        questionTitle.style.maxWidth = "400px";
+        questionTitle.id = "title-" + question.id;
+
+        questionTitleWrapper.appendChild(questionTitle);
+        questionTitleWrapper.appendChild(icon);
+
+        questionDiv.appendChild(questionTitleWrapper);
+
+        var answersWrapper = document.createElement("div");
+        answersWrapper.className = "answers";
+
+        let num_correct = 0;
+
+        question.answers.forEach(answer => {
+          if (answer.is_correct)
+            num_correct++;
+        })
+
+        question.answers.forEach(answer => {
+          var answerWrapper = document.createElement("div");
+          answerWrapper.className = "exam-answer";
+          var label = document.createElement("label");
+
+          if (num_correct > 1) {
+
+            var opt = document.createElement("input");
+            opt.type = "check";
+            opt.name = "question-" + question.id;
+            opt.value = answer.id;
+            opt.className = "exam-answer-check";
+          } else {
+
+            var opt = document.createElement("input");
+            opt.type = "radio";
+            opt.name = "question-" + question.id;
+            opt.value = answer.id;
+            opt.className = "exam-answer-check";
+
+          }
+
+          label.appendChild(document.createTextNode(answer.answer_text));
+          answerWrapper.appendChild(label);
+          answerWrapper.appendChild(opt);
+
+          answersWrapper.appendChild(answerWrapper);
+
+        });
+
+        questionDiv.appendChild(answersWrapper);
+        container.appendChild(questionDiv);
+
+        var deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", () => deleteButton.parentElement.remove())
+        questionDiv.appendChild(deleteButton);
+
+      });
+
+      document.getElementById("exam-section").classList.remove("hidden");
+
+      document.querySelector('#save-button').addEventListener('click', function (e) {
+
+      });
+    }
+
+    function editQuestion(index) {
+      const modal = document.getElementById("editModal");
+      const backdrop = document.getElementById("modalBackdrop");
+      const input = document.getElementById("editInput");
+
+
+      //const currentQuestionText = exam.questions[index-1].question_text;
+
+      // Get the existing question content (assume it's in an element with id like `question-1`)
+      const questionElement = document.getElementById(`title-${index}`);
+      let questionText = questionElement.textContent.split(") ");
+      input.value = questionText[1];
+
+      modal.style.display = "block";
+      backdrop.style.display = "block";
+
+      document.getElementById("saveEdit").onclick = function () {
+        questionElement.textContent = `${index}) ${input.value}`;
+        closeModal();
+      };
+
+      document.getElementById("cancelEdit").onclick = closeModal;
+
+      function closeModal() {
+        modal.style.display = "none";
+        backdrop.style.display = "none";
+      }
+    }
+
+
+
+
+
+
+    getCourseInfo();
+    getCurrentExamInfo();
+
+  </script>
+</body>
+
+</html>

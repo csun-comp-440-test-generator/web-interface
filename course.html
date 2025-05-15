@@ -7,34 +7,121 @@
 </head>
 <body>
   <div class="exam-container">
-    <h2>Create Course</h2>
-    <input type="text" id="course-code" placeholder="Course Code">
-    <div style="height: 10px;"></div>
-    <input type="text" id="course-name" placeholder="Course Name">
-    <div style="height: 10px;"></div>
-    <button onclick="makeCourse()">Create Course</button>
+    <h2 id="header"></h2>
+    <h3>Courses</h3>
+
+    <div style="padding-bottom: 10px;">
+      <select id="course-dropdown">
+      </select> 
+    </div>
+    <div style="padding-bottom: 10px;">
+    </div>
+
+    <button id="section-btn" style="margin-bottom: 10px;"></button>
+    <button id="section-btn" onclick="window.location.href ='instructor.html';">Cancel</button>
     <p id="course-message" style="color: red; margin-top: 10px;"></p>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
-    function makeCourse() {
-      let code = document.getElementById("course-code").value;
-      let name = document.getElementById("course-name").value;
-      let message = document.getElementById("course-message");
+    function setHeader(role){
+      if (role === "instructor"){
+        const header = document.getElementById("header");
+        header.textContent = "Create Section";
+      }
+      else if (role === "assistant"){
+        const header = document.getElementById("header");
+        header.textContent = "Register Section";
+      }
+    }
 
-      if (code === "" || name === "") {
-        message.textContent = "Please fill both fields.";
-        return;
+    function setButton(role){
+      if (role === "instructor"){
+        const btn = document.getElementById("section-btn");
+        btn.textContent = "Create Section";
+        btn.onclick=createSection
+      }
+      else if (role === "assistant"){
+        const btn = document.getElementById("section-btn");
+        btn.textContent = "Register Section";
+        btn.onclick=registerAssistant
+      }
+    }
+
+    async function findExistingClasses(){
+      const courseDropdown = document.getElementById("course-dropdown");
+      courseDropdown.innerHTML = `<option selected disabled value=-1>Choose an option</option>`;
+      const classes = await getClasses()
+      classes.forEach(element => {
+        const classOption = document.createElement("option");
+        let classInfo = `${element.id} - ${element.name}`
+        classOption.value = element.id;
+        classOption.textContent = classInfo;
+        courseDropdown.appendChild(classOption);
+        });
+
       }
 
-      let fullName = code + " - " + name;
-      addCourse(fullName);
-      message.style.color = "green";
-      message.textContent = "Course added.";
+    async function findOpenSections(){
+      const id = localStorage.getItem("currentUser");
+      const courseDropdown = document.getElementById("course-dropdown");
+      courseDropdown.innerHTML = `<option selected disabled value=-1>Choose an option</option>`;
+      const classes = await getOpenSections(id)
+      classes.forEach(element => {
+        const classOption = document.createElement("option");
+        let classInfo = `${element.course_id}-${element.section_id}: ${element.course_name}`
+        classOption.value = element.section_id;
+        classOption.textContent = classInfo;
+        courseDropdown.appendChild(classOption);
+        });
+
+      }
+    
+    async function createSection() {
+      let messageElement = document.getElementById("course-message");
+      let courseDropdown = document.getElementById("course-dropdown");
+      let courseID = courseDropdown.value;
+      const teacherID = localStorage.getItem("currentUser");
+
+      await addCourse(parseInt(courseID), parseInt(teacherID));
+
+      messageElement.style.color = "green";
+      messageElement.textContent = "Section added.";
       setTimeout(() => window.location.href = "instructor.html", 1000);
     }
+
+    async function registerAssistant(){
+      let res;
+      let messageElement = document.getElementById("course-message");
+      let courseDropdown = document.getElementById("course-dropdown");
+      let sectionID = courseDropdown.value;
+      const id = localStorage.getItem("currentUser");
+
+
+      if(parseInt(sectionID) > 0){
+        res = await addAssistantToCourse(parseInt(sectionID), parseInt(id));
+      }
+      try{
+        if(res.ok){
+          messageElement.style.color = "green";
+          messageElement.textContent = "Succesfully Registered To Section";
+          setTimeout(() => window.location.href = "instructor.html", 1000);
+        }
+      }
+      catch (e){
+        console.log(e)
+      }
+    }
+
+    const role = localStorage.getItem("role");
+    setHeader(role);
+    setButton(role);
+
+    if (role==="instructor")
+      findExistingClasses()
+    else if (role === "assistant")
+      findOpenSections();
   </script>
 </body>
 </html>

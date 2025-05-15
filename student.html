@@ -25,15 +25,17 @@
 <body>
   <div class="exam-container">
     <h2 id="page-title">Student Dashboard</h2>
-
-    <div id="course-select-container">
-      <select id="course-dropdown">
-        <option value="">Select Course</option>
-      </select>
-      <div style="height: 20px;"></div>
-      <button onclick="goToEnrollPage()">Enroll in Course</button>
-      <div style="height: 20px;"></div>
+    <div id="student-info">
     </div>
+
+    <div id="section-select-container">
+      <select id="section-dropdown" style="margin-bottom: 10px;">
+      </select>
+      <div style="margin-bottom: 10px;" id="button-container">
+        <button id="section-button" onclick="goToCoursePage()" style="margin-bottom: 10px;" class="hidden">View Section</button>
+        <button id="enroll-button" onclick="goToEnrollPage()" style="margin-bottom: 10px;">Enroll in a New Section</button>
+        <button id="logout-button" onclick="window.location.href = 'index.html'">Logout</button>
+      </div>
 
     <p id="no-exam-message" style="color:red; display:none;">No exams for this course.</p>
 
@@ -61,143 +63,54 @@
   <script src="script.js"></script>
 
   <script>
+    async function fillStudentInfo(){
+      const studentID = localStorage.getItem("currentUser");
+      const studentInfo = await getStudentInfo(parseInt(studentID));
+      const studentElement = document.getElementById("student-info")
+      studentElement.innerHTML = `
+      <div>
+      <p> Student: <strong> ${studentInfo.name} </strong></p>
+      <p> Email: <strong> ${studentInfo.email} </strong> </p>
+      <p> ID: <strong> ${studentInfo.id} </strong> <p>
+      </div>
+      `;
+    }
+
+    async function findSections(){
+        const sectionDropdown = document.getElementById("section-dropdown");
+        sectionDropdown.innerHTML = `<option selected disabled>Select Section</option>`;
+        studentID = localStorage.getItem("currentUser");
+        const sections = await getEnrolledSections(parseInt(studentID));
+
+        sections.forEach(element => {
+          const sectionOption = document.createElement("option");
+          let sectionInfo = `${element.course_id}-${element.section_id}: ${element.course_name}`
+          sectionOption.value = element.section_id;
+          sectionOption.textContent = sectionInfo;
+          sectionDropdown.appendChild(sectionOption);
+          });
+      }
+
     function goToEnrollPage() {
       window.location.href = "enroll.html";
     }
 
-    function fillCourseDropdown() {
-      var courseDropdown = document.getElementById("course-dropdown");
-      var userId = localStorage.getItem("userId");
-      var enrolledCourses = getEnrolledCourses(userId);
-      courseDropdown.innerHTML = '<option value="">Select Course</option>';
-      for (var i = 0; i < enrolledCourses.length; i++) {
-        var option = document.createElement("option");
-        option.value = enrolledCourses[i];
-        option.textContent = enrolledCourses[i];
-        courseDropdown.appendChild(option);
-      }
+    function goToCoursePage() {
+      let section_id = document.getElementById("section-dropdown").value;
+      localStorage.setItem("selectedCourse", section_id);
+      window.location.href = "student_course.html";
     }
 
-    document.getElementById("course-dropdown").addEventListener("change", function () {
-      var selectedCourse = this.value;
-      var instructorIds = Object.keys(localStorage)
-        .filter(k => k.startsWith("exams_"))
-        .map(k => k.replace("exams_", ""));
+    fillStudentInfo();
+    findSections();
 
-      var allExams = [];
-      for (var i = 0; i < instructorIds.length; i++) {
-        var exams = getExams(instructorIds[i]);
-        allExams = allExams.concat(exams);
-      }
-
-      var matchingExams = [];
-      for (var i = 0; i < allExams.length; i++) {
-        if (allExams[i].course === selectedCourse) {
-          matchingExams.push(allExams[i]);
-        }
-      }
-
-      var examDropdown = document.getElementById("exam-dropdown");
-      examDropdown.innerHTML = "";
-
-      if (matchingExams.length === 0) {
-        document.getElementById("exam-select-container").classList.add("hidden");
-        document.getElementById("no-exam-message").style.display = "block";
-      } else {
-        document.getElementById("no-exam-message").style.display = "none";
-        for (var j = 0; j < matchingExams.length; j++) {
-          var examOption = document.createElement("option");
-          examOption.value = j;
-          examOption.textContent = matchingExams[j].title;
-          examDropdown.appendChild(examOption);
-        }
-        document.getElementById("exam-select-container").classList.remove("hidden");
-      }
-
-      window.currentExams = matchingExams;
+    document.getElementById("section-dropdown").addEventListener("change", function () {
+      if (this.value !== "") {
+        document.getElementById("section-button").classList.remove("hidden");
+      };
     });
 
-    function startExam() {
-      var courseName = document.getElementById("course-dropdown").value;
-      var examIndex = document.getElementById("exam-dropdown").value;
-      var exam = window.currentExams[examIndex];
-
-      document.getElementById("page-title").textContent = exam.title;
-
-      var container = document.getElementById("exam-questions");
-      container.innerHTML = "";
-
-      for (var q = 0; q < exam.questions.length; q++) {
-        var questionDiv = document.createElement("div");
-        questionDiv.className = "question";
-
-        var questionTitle = document.createElement("h4");
-        questionTitle.textContent = "Question " + (q + 1) + ": " + exam.questions[q].question;
-        questionDiv.appendChild(questionTitle);
-
-        var optionsWrapper = document.createElement("div");
-        optionsWrapper.className = "options";
-
-        for (var o = 0; o < exam.questions[q].options.length; o++) {
-          var label = document.createElement("label");
-          var radio = document.createElement("input");
-          radio.type = "radio";
-          radio.name = "q" + q;
-          radio.value = o;
-
-          label.appendChild(radio);
-          label.appendChild(document.createTextNode(exam.questions[q].options[o]));
-          optionsWrapper.appendChild(label);
-        }
-
-        questionDiv.appendChild(optionsWrapper);
-        container.appendChild(questionDiv);
-      }
-
-      document.getElementById("exam-section").classList.remove("hidden");
-      document.getElementById("course-select-container").classList.add("hidden");
-      document.getElementById("exam-select-container").classList.add("hidden");
-
-      var totalTime = exam.timeLimit * 60;
-      var timer = document.getElementById("timer");
-
-      function updateCountdown() {
-        var mins = Math.floor(totalTime / 60);
-        var secs = totalTime % 60;
-        timer.textContent = "Time Left: " + mins + ":" + (secs < 10 ? "0" + secs : secs);
-        if (totalTime <= 0) {
-          clearInterval(examTimer);
-          document.getElementById("submit-exam-button").click();
-        }
-        totalTime--;
-      }
-
-      updateCountdown();
-      var examTimer = setInterval(updateCountdown, 1000);
-
-      document.getElementById("submit-exam-button").onclick = function () {
-        clearInterval(examTimer);
-
-        var score = 0;
-        for (var i = 0; i < exam.questions.length; i++) {
-          var correctAnswer = exam.questions[i].answer;
-          var picked = document.querySelector("input[name='q" + i + "']:checked");
-          if (picked && parseInt(picked.value) === correctAnswer) {
-            score++;
-          }
-        }
-
-        var percent = Math.round((score / exam.questions.length) * 100);
-
-        document.getElementById("exam-section").classList.add("hidden");
-        document.getElementById("result-view").classList.remove("hidden");
-
-        document.getElementById("score-percent").textContent = percent + "%";
-        document.getElementById("score-details").textContent = score + "/" + exam.questions.length + " Points";
-      };
-    }
-
-    fillCourseDropdown();
+    //fillCourseDropdown();
   </script>
 </body>
 </html>

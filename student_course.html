@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>View Exams</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body onload="fillExams()">
+  <div class="exam-container">
+    <div id="section-info">
+    </div>
+    <div id="exam-list" style="margin-bottom: 10px;"></div>
+    <button id="take-button" style="margin-bottom: 10px;">View</button>
+    <button style="margin-bottom: 10px;" onclick="window.location.href='student.html'">Back</button>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script>
+
+    function displayTimeStamp(exam_info){
+        const utcStartDate = new Date(exam_info.start_time + "Z")
+        const utcEndDate = new Date(exam_info.end_time + "Z")
+
+        const localDate = utcStartDate.toLocaleDateString();
+        const localStartTime = new Date(utcStartDate).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+        const localEndTime = new Date(utcEndDate).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        const today = new Date().toLocaleDateString();
+        const now = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        const TimeStamp={
+          date: localDate,
+          startTime: localStartTime,
+          endTime: localEndTime,
+          currentDate: today,
+          currentTime: now,
+        }
+
+        return TimeStamp
+      }
+   
+    async function fillExams() {
+      const section_id =  localStorage.getItem("selectedCourse");
+      const student_id =  localStorage.getItem("currentUser");
+
+      const section_info = await getSectionInfo(parseInt(section_id));
+      const current_grade = await getCurrentGrade(parseInt(student_id), parseInt(section_id))
+
+      document.getElementById("section-info").innerHTML = `
+      <h2>Section:</h2>
+      <h3>${section_info.course}-${section_info.id}: 
+        ${section_info.course_name}</h3>
+      <h3>Grade: ${current_grade}%</h3>
+        <p>Exams:</p>`;
+
+      let examList = document.getElementById("exam-list");
+      let exams = await getRegisteredExams(parseInt(student_id),parseInt(section_id));
+
+      if (exams.length > 0) {
+        let ul = document.createElement("ul");
+        ul.style.listStyle = "none";
+        ul.style.margin = "0";
+        ul.style.padding = "0";
+        
+        for (let i = 0; i < exams.length; i++) {   
+          timeStamp = displayTimeStamp(exams[i])                                                                                                                                                                                                                                                      
+          let li = document.createElement("li");
+          li.style.marginBottom = "10px";
+          const isChecked = i === 0 ? 'checked' : '';
+
+          const currentDateTime = new Date();
+          
+          let dueDateDipslay;
+          if (timeStamp.currentDate >= timeStamp.date && timeStamp.currentTime > timeStamp.endTime ){
+              dueDateDipslay = `<div style="font-size: 0.85em; text-align: right;">
+              <i style="color:red;"><b>Missing</b></i>
+          </div>`
+          }
+          else{
+            dueDateDipslay = `<div style="font-size: 0.85em; text-align: right;">
+            <div>${timeStamp.date}</div>
+            <div>Start: ${timeStamp.startTime}</div>
+            <div>Due: ${timeStamp.endTime}</div>
+          </div>`
+          }
+          li.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input style="width: 15px; margin: 0;" id="radio-${i}" type="radio" name="exam" value="${exams[i].test_id}" ${isChecked}>
+              <label style="font-size: 1em; font-weight: bold;">${exams[i].test_name}</label>
+            </div>
+            ${dueDateDipslay}
+        </div>
+        `;
+          ul.appendChild(li);
+        }
+        examList.appendChild(ul);
+      } 
+    else{
+      let span = document.createElement("span");
+      span.innerHTML= `<strong> No Exams Available </strong`;
+      span.style.marginBottom = "10px";
+      examList.appendChild(span);
+    }
+
+
+      //ADD LOGIC FOR START AND END TIMES
+    }
+
+    document.getElementById("take-button").addEventListener("click", function() {
+      const selected = document.querySelector('input[name="exam"]:checked');
+      const exam_id = selected.value;
+      localStorage.setItem("selectedExam", exam_id);
+      if (selected){
+            window.location.href='take_exam.html';
+      }
+
+    })
+
+  </script>
+</body>
+</html>

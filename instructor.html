@@ -7,79 +7,117 @@
 </head>
 <body>
   <div class="exam-container">
-    <h2>Instructor Dashboard</h2>
+    <h2 id="header"></h2>
+    <div id="instructor-info">
 
-    <select id="course-select">
-      <option value="">Select Course</option>
-    </select>
-    <div style="height: 20px;"></div>
-
-    <button id="create-course-btn" onclick="location.href='course.html'">Create Course</button>
-
-    <div id="exam-btn-container" class="hidden">
-      <button onclick="goToExam()">Create Exam</button>
-      <div style="height: 10px;"></div>
-      <button id="view-exams-btn" class="hidden" onclick="goToView()">View Exams</button>
     </div>
+    <select id="section-dropdown" style="margin-bottom: 10px;">
+    </select>
+
+    <button id="create-course-btn" onclick="location.href='course.html'" style="margin-bottom: 10px;">New Section</button>
+    <button id="add-course-btn" onclick="location.href='course.html'" style="margin-bottom: 10px;">Add Section</button>
+  
+    <div id="exam-btn-container" class="hidden">
+      <button onclick="goToExam()" style="margin-bottom: 10px;" id="create-exam-btn" class="hidden">Create Exam</button>
+      <button id="view-exams-btn" style="margin-bottom: 10px;" class="hidden" onclick="goToView()">View Exams</button>
+    </div>
+    <button id="create-course-btn" onclick="location.href='index.html'">Logout</button>
   </div>
 
   <script src="data.js"></script>
   <script src="script.js"></script>
   <script>
-    function fillCourses() {
-      let select = document.getElementById("course-select");
-      select.innerHTML = "<option value=''>Select Course</option>";
-      let userId = localStorage.getItem("userId");
-      let list = getCourses(userId);
 
-      for (let i = 0; i < list.length; i++) {
-        let opt = document.createElement("option");
-        opt.value = list[i];
-        opt.textContent = list[i];
-        select.appendChild(opt);
+      async function fillInfo(){
+          const role = localStorage.getItem("role");
+          const id = localStorage.getItem("currentUser");
+
+          const header = document.getElementById("header")
+          const infoElement = document.getElementById("instructor-info")
+
+
+          let info;
+
+          if (role === "instructor"){
+            info = await getTeacherInfo(parseInt(id));
+            header.textContent = "Instructor Dashboard"
+          }
+          else if (role === "assistant"){
+            info = await getAssistantInfo(parseInt(id));   
+            header.textContent = "Teaching Assistant Dashboard"         
+          }
+
+          infoElement.innerHTML = `
+          <div>
+          <p> Instructor: <strong> ${info.name} </strong></p>
+          <p> Email: <strong> ${info.email} </strong> </p>
+          <p> ID: <strong> ${info.id} </strong> <p>
+          </div>
+          `;
       }
 
-      if (list.length > 0) {
-        select.value = list[0];
-        document.getElementById("exam-btn-container").classList.remove("hidden");
-        document.getElementById("create-course-btn").classList.add("hidden");
-        checkIfExams(list[0]);
-      }
-    }
+      async function findSections(){
+        const role = localStorage.getItem("role");
+        const id = localStorage.getItem("currentUser");
 
-    function checkIfExams(course) {
-      let userId = localStorage.getItem("userId");
-      let exams = getExams(userId);
-      let filtered = exams.filter(e => e.course === course);
-      if (filtered.length > 0) {
+        const sectionDropdown = document.getElementById("section-dropdown");
+        sectionDropdown.innerHTML = `<option selected disabled>Choose a Section</option>`;
+        let sections;
+
+        if (role === "instructor"){
+          sections = await getTeacherSections(parseInt(id));
+          }
+        else if (role === "assistant"){
+          sections = await getAssistantSections(parseInt(id));       
+        }
+
+        sections.forEach(element => {
+          const sectionOption = document.createElement("option");
+          let sectionInfo = `${element.course_id}-${element.section_id}: ${element.course_name}`
+          sectionOption.value = element.section_id;
+          sectionOption.textContent = sectionInfo;
+          sectionDropdown.appendChild(sectionOption);
+          });
+      }
+
+    async function checkIfExams(course) {
+      const role = localStorage.getItem("role");
+      let section_id = document.getElementById("section-dropdown").value;
+      let exams = await getExams(section_id);
+      if (exams.length > 0) {
         document.getElementById("view-exams-btn").classList.remove("hidden");
-      } else {
-        document.getElementById("view-exams-btn").classList.add("hidden");
       }
-    }
+      if (role != "assistant")
+            document.getElementById("create-exam-btn").classList.remove("hidden");
+        }
 
     function goToExam() {
-      let val = document.getElementById("course-select").value;
-      localStorage.setItem("selectedCourse", val);
+      let section_id = document.getElementById("section-dropdown").value;
+      localStorage.setItem("selectedCourse", section_id);
       window.location.href = "exam.html";
     }
 
     function goToView() {
-      let val = document.getElementById("course-select").value;
-      localStorage.setItem("selectedCourse", val);
+      let section_id = document.getElementById("section-dropdown").value;
+      localStorage.setItem("selectedCourse", section_id);
       window.location.href = "view_exams.html";
     }
 
-    fillCourses();
+      findSections();
+      fillInfo();
 
-    document.getElementById("course-select").addEventListener("change", function () {
+    let role = localStorage.getItem("role");
+    if (role === "assistant")
+      document.getElementById("create-course-btn").classList.add("hidden");
+    else if (role==="instructor")
+      document.getElementById("add-course-btn").classList.add("hidden");
+
+    document.getElementById("section-dropdown").addEventListener("change", function () {
       if (this.value !== "") {
         document.getElementById("exam-btn-container").classList.remove("hidden");
         document.getElementById("create-course-btn").classList.add("hidden");
+        document.getElementById("add-course-btn").classList.add("hidden");
         checkIfExams(this.value);
-      } else {
-        document.getElementById("exam-btn-container").classList.add("hidden");
-        document.getElementById("create-course-btn").classList.remove("hidden");
       }
     });
   </script>
